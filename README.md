@@ -306,7 +306,45 @@ Documentación completa del dominio: [`.agents/bc4-domain-docs`](../../.agents/b
 ## Build y pruebas
 
 ```bash
-./mvnw test
+cd ms-production-packaging
+
+./mvnw test      # 162 pruebas unitarias + reporte de cobertura JaCoCo
+./mvnw verify    # además valida el umbral mínimo de cobertura (85 % líneas)
 ```
 
-10 pruebas unitarias verifican los invariantes de ambos agregados y el ciclo de vida completo de cada uno, usando el repositorio en memoria (`InMemoryOrdenDeProduccionRepository`) como doble de prueba.
+Reporte de cobertura: `target/site/jacoco/index.html` (requiere JDK 21).
+
+**162 pruebas unitarias** cubren las tres capas, sin levantar Spring ni base de datos:
+
+| Capa | Enfoque | Cobertura de líneas |
+| :--- | :------ | ------------------: |
+| Dominio | Java puro, sin dobles: invariantes, transiciones de estado y eventos | 99.3 % |
+| Aplicación | **Mocks de Mockito** de los puertos (`OrdenDeProduccionRepository`, `PaqueteEtiquetadoRepository`, `EventPublisher`) para verificar la orquestación; además un **fake** en memoria para el flujo completo | 100 % |
+| Infraestructura | **Mocks** de Spring Data JPA, del `ApplicationEventPublisher` y de los servicios de aplicación (adaptadores, mappers, controllers, manejo de errores) | 97.9 % |
+
+Cobertura global: **98.8 % de líneas / 99.1 % de ramas**.
+
+Detalle de la estrategia, herramientas y mapa de pruebas: [`docs/pruebas-unitarias.md`](../docs/pruebas-unitarias.md).
+
+> Las pruebas de integración (`*IT.java`) están excluidas de `mvn test` a propósito:
+> se abordan en la siguiente etapa del proyecto.
+
+### Entorno de pruebas asistido por IA
+
+El repositorio incluye un entorno validado para generar y auditar pruebas con IA:
+dos subagentes (`test-writer`, `test-reviewer`), tres skills con las convenciones del
+proyecto, un gate reproducible (`tools/validate-tests.ps1` / `.sh`) y verificación
+objetiva por *mutation testing* con PIT.
+
+```powershell
+# desde la raíz del repositorio (ddd_clean)
+.\tools\validate-tests.ps1              # compila + suite + umbral de cobertura
+.\tools\validate-tests.ps1 -Mutation    # además, mutation testing
+```
+
+Resultado medido: **163 tests**, 98.8 % de líneas y **198/200 mutantes muertos** (99 %).
+La primera pasada de PIT detectó 12 huecos de verificación que la cobertura no veía —
+entre ellos, que se podía borrar la publicación de eventos de dominio sin que fallara
+ningún test.
+
+Guía completa: [`docs/entorno-pruebas-ai.md`](../docs/entorno-pruebas-ai.md).

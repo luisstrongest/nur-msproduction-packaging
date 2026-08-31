@@ -36,6 +36,17 @@ public final class ItemOrden {
         this.estado             = EstadoItem.PENDIENTE;
     }
 
+    /**
+     * Reconstruye un ItemOrden desde persistencia, preservando su estado.
+     * Uso exclusivo de los adaptadores de infraestructura.
+     */
+    public static ItemOrden reconstituir(String recetaId, String nombreReceta, int cantidadTotal,
+                                         Porcion porcionIndividual, EstadoItem estado) {
+        ItemOrden item = new ItemOrden(recetaId, nombreReceta, cantidadTotal, porcionIndividual);
+        item.estado = Objects.requireNonNull(estado, "estado es obligatorio.");
+        return item;
+    }
+
     /** Avanza el item a estado PREPARADO. Solo puede llamarse una vez. */
     public void marcarPreparado() {
         if (this.estado == EstadoItem.PREPARADO) {

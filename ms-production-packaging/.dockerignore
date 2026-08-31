@@ -1,0 +1,23 @@
+# Todo lo que NO debe entrar al contexto de build de Docker.
+# Reduce el tamano del contexto y evita invalidar el cache por archivos basura.
+
+target/
+.git/
+.gitignore
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+*.log
+
+# El build usa la imagen oficial de Maven, no el wrapper.
+.mvn/
+mvnw
+mvnw.cmd
+
+Dockerfile
+.dockerignore
+docker-compose*.yml
+README.md

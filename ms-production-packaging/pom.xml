@@ -19,12 +19,62 @@
 
     <properties>
         <java.version>21</java.version>
+        <jacoco.version>0.8.12</jacoco.version>
+        <pitest.version>1.30.0</pitest.version>
+        <pitest-junit5.version>1.2.3</pitest-junit5.version>
     </properties>
 
     <dependencies>
+        <!-- Nucleo Spring Boot -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- Capa web REST (controllers) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Persistencia JPA / Hibernate: construye la BD a partir del modelo -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- Validacion de DTOs de entrada (@Valid) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- Actuator: expone /actuator/health, usado por el healthcheck de
+             Docker Compose y por el balanceador de carga (nginx) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- Base de datos H2 en memoria (para probar con Swagger sin instalar nada) -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Swagger UI / OpenAPI 3 (springdoc) -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>2.7.0</version>
+        </dependency>
+
+        <!-- Driver JDBC de PostgreSQL -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
         </dependency>
 
         <dependency>
@@ -39,6 +89,138 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
+            <!-- ================================================================
+                 Surefire: ejecuta SOLO los tests unitarios.
+                 Las clases *IT.java (integration tests, que levantan el contexto
+                 de Spring y/o una BD) quedan fuera de `mvn test` a proposito:
+                 en esta etapa del proyecto solo se entregan pruebas unitarias.
+                 ================================================================ -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <includes>
+                        <include>**/*Test.java</include>
+                    </includes>
+                    <excludes>
+                        <exclude>**/*IT.java</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+
+            <!-- ================================================================
+                 JaCoCo: mide el code coverage de los tests unitarios.
+
+                   mvn test      -> genera target/site/jacoco/index.html
+                   mvn verify    -> ademas valida el umbral minimo (jacoco:check)
+                 ================================================================ -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+                <configuration>
+                    <excludes>
+                        <!-- Clases sin logica propia: no aportan al coverage real -->
+                        <exclude>**/ProduccionApplication.class</exclude>
+                        <exclude>**/infrastructure/config/**</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <!-- 1) Engancha el agente de JaCoCo a la JVM de los tests -->
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+
+                    <!-- 2) Genera el reporte HTML/XML al terminar los tests -->
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+
+                    <!-- 3) Falla el build si el coverage baja del umbral acordado -->
+                    <execution>
+                        <id>check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>LINE</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.85</minimum>
+                                        </limit>
+                                        <limit>
+                                            <counter>BRANCH</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.80</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- ================================================================
+                 PIT (mutation testing): valida la CALIDAD de los tests, no solo
+                 cuantas lineas tocan. Introduce mutantes en el codigo (cambia
+                 un > por >=, niega una condicion, borra una llamada...) y exige
+                 que algun test falle. Un mutante que sobrevive = una linea
+                 cubierta por un test que en realidad no comprueba nada.
+
+                 Es la verificacion clave del entorno de pruebas asistido por IA:
+                 la cobertura alta se falsifica facil, matar mutantes no.
+
+                   ./mvnw -DskipTests=false -Djacoco.skip=true test pitest:mutationCoverage
+                   -> target/pit-reports/index.html
+                 ================================================================ -->
+            <plugin>
+                <groupId>org.pitest</groupId>
+                <artifactId>pitest-maven</artifactId>
+                <version>${pitest.version}</version>
+                <dependencies>
+                    <!-- Sin esto PIT no reconoce los tests de JUnit 5 -->
+                    <dependency>
+                        <groupId>org.pitest</groupId>
+                        <artifactId>pitest-junit5-plugin</artifactId>
+                        <version>${pitest-junit5.version}</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <!-- Se mutan dominio y aplicacion: es donde vive la logica.
+                         La infraestructura es mapeo y delegacion. -->
+                    <targetClasses>
+                        <param>com.nurticenter.produccion.domain.*</param>
+                        <param>com.nurticenter.produccion.application.*</param>
+                    </targetClasses>
+                    <targetTests>
+                        <param>com.nurticenter.produccion.*Test</param>
+                    </targetTests>
+                    <excludedTestClasses>
+                        <param>com.nurticenter.produccion.*IT</param>
+                    </excludedTestClasses>
+                    <outputFormats>
+                        <param>HTML</param>
+                        <param>XML</param>
+                    </outputFormats>
+                    <timestampedReports>false</timestampedReports>
+                    <!-- Falla si sobreviven demasiados mutantes -->
+                    <mutationThreshold>80</mutationThreshold>
+                </configuration>
             </plugin>
         </plugins>
     </build>

@@ -1,0 +1,11 @@
+# Configuracion personal de Claude Code (rutas y permisos de cada maquina).
+# Lo compartido va en .claude/settings.json, que SI se versiona.
+.claude/settings.local.json
+
+# Artefactos de build (cada microservicio ignora ademas su propio target/)
+target/
+*.log
+
+# Variables de entorno reales: solo se versiona el .env.example
+.env
+*/.env

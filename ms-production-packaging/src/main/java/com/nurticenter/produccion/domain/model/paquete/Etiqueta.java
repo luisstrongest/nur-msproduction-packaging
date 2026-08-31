@@ -47,6 +47,17 @@ public final class Etiqueta {
     }
 
     /**
+     * Reconstruye una Etiqueta desde persistencia, preservando su fecha de generacion original.
+     * Uso exclusivo de los adaptadores de infraestructura.
+     */
+    public static Etiqueta reconstituir(String nombrePaciente,
+                                        DireccionImpresa direccion,
+                                        CodigoIdentificacion codigo,
+                                        LocalDateTime fechaGeneracion) {
+        return new Etiqueta(nombrePaciente, direccion, codigo, fechaGeneracion);
+    }
+
+    /**
      * Valida que la etiqueta tiene todos sus componentes correctos.
      * Usado como condicion de salida antes de marcar el paquete como LISTO.
      */

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "env": {
+    "JAVA_HOME": "C:\\Program Files\\Java\\jdk-21"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(./mvnw:*)",
+      "Bash(./tools/validate-tests.sh:*)",
+      "Bash(../tools/validate-tests.sh:*)",
+      "PowerShell(.\\mvnw.cmd:*)",
+      "PowerShell(.\\tools\\validate-tests.ps1:*)",
+      "PowerShell(..\\tools\\validate-tests.ps1:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(java -version)"
+    ],
+    "ask": [
+      "Edit(ms-production-packaging/src/main/**)",
+      "Write(ms-production-packaging/src/main/**)",
+      "Edit(**/pom.xml)"
+    ],
+    "deny": [
+      "Bash(git push:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(rm -rf:*)",
+      "Bash(./mvnw deploy:*)",
+      "Bash(mvn deploy:*)",
+      "Read(./**/.env)"
+    ]
+  }
+}

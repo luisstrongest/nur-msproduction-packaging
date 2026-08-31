@@ -1,3 +1,55 @@
 spring:
   application:
     name: ms-production-packaging
+
+  # -- Base de datos PostgreSQL ----------------------------------------------
+  # Todo lo relacionado con la BD cuelga de 'spring:' (2 espacios de indentacion).
+  datasource:
+    url: jdbc:postgresql://localhost:5432/nur_prod_db
+    username: postgres
+    password: S1stemas
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      # update : crea las tablas que falten y conserva los datos existentes.
+      # create : borra y recrea el esquema en cada arranque (util al inicio).
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+    open-in-view: false
+
+server:
+  port: 8082
+
+# -- Swagger UI / OpenAPI ------------------------------------------------------
+# UI:   http://localhost:8082/swagger-ui.html
+# JSON: http://localhost:8082/v3/api-docs
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+  api-docs:
+    path: /v3/api-docs
+
+# ---------------------------------------------------------------------------
+# Alternativa: H2 en memoria (para probar sin PostgreSQL). Reemplazar el bloque
+# spring.datasource / spring.jpa de arriba por:
+#
+#   datasource:
+#     url: jdbc:h2:mem:produccion;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+#     driver-class-name: org.h2.Driver
+#     username: sa
+#     password:
+#   jpa:
+#     hibernate:
+#       ddl-auto: create-drop
+#   h2:
+#     console:
+#       enabled: true
+#       path: /h2-console
+# ---------------------------------------------------------------------------

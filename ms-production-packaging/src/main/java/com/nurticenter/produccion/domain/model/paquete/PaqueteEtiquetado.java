@@ -55,6 +55,18 @@ public class PaqueteEtiquetado {
         return new PaqueteEtiquetado(PaqueteId.nuevo(), pacienteId, ordenId);
     }
 
+    /**
+     * Reconstruye un PaqueteEtiquetado desde persistencia, preservando su estado y etiqueta.
+     * NO emite eventos. Uso exclusivo de los adaptadores de infraestructura.
+     */
+    public static PaqueteEtiquetado reconstituir(PaqueteId id, PacienteId pacienteId, String ordenId,
+                                                 EstadoPaquete estado, Etiqueta etiqueta) {
+        PaqueteEtiquetado paquete = new PaqueteEtiquetado(id, pacienteId, ordenId);
+        paquete.estado   = estado;
+        paquete.etiqueta = etiqueta;
+        return paquete;
+    }
+
     // -- Comportamiento -----------------------------------------------------------------
 
     /**

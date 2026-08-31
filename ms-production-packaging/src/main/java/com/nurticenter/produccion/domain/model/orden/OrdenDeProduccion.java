@@ -67,6 +67,29 @@ public class OrdenDeProduccion {
         return new OrdenDeProduccion(id, fechaProduccion, items);
     }
 
+    // -- Constructor de reconstitucion (para la capa de infraestructura) -----------
+    private OrdenDeProduccion(OrdenId id, LocalDate fechaProduccion, EstadoOrden estado,
+                              List<ItemOrden> items, List<String> paqueteIds) {
+        this.id                  = id;
+        this.fechaProduccion     = fechaProduccion;
+        this.estado              = estado;
+        this.items               = new ArrayList<>(items);
+        this.paqueteIdsGenerados = new ArrayList<>(paqueteIds);
+        this.eventos             = new ArrayList<>();
+        // No se registra OrdenGenerada: la orden ya existia; solo se rehidrata desde la BD.
+    }
+
+    /**
+     * Reconstruye una OrdenDeProduccion desde el almacenamiento persistente.
+     * NO emite eventos: representa un estado ya existente, no un hecho nuevo.
+     * Uso exclusivo de los adaptadores de persistencia (infraestructura).
+     */
+    public static OrdenDeProduccion reconstituir(OrdenId id, LocalDate fechaProduccion,
+                                                 EstadoOrden estado, List<ItemOrden> items,
+                                                 List<String> paqueteIds) {
+        return new OrdenDeProduccion(id, fechaProduccion, estado, items, paqueteIds);
+    }
+
     // -- Comportamiento de dominio ---------------------------------------------------
 
     /**
