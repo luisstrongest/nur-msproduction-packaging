@@ -1,0 +1,105 @@
+# =============================================================================
+# Validacion independiente de las PRUEBAS DE INTEGRACION.
+#
+# Es la pieza que convierte el entorno local en un entorno VALIDADO: el mismo gate
+# que ejecuta el agente de IA en la maquina del desarrollador
+# (tools/validate-integration.sh) corre aqui sobre una maquina limpia, contra un
+# PostgreSQL de verdad levantado como servicio del runner.
+#
+# Si la coleccion solo pasaba "en local" -o solo pasaba la primera vez-, aqui se cae.
+# =============================================================================
+name: integration-tests
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Pruebas de integracion (Postman + Newman)
+    runs-on: ubuntu-latest
+
+    # Base de datos real y efimera: se crea con el job y muere con el.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: nur_prod_it
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d nur_prod_it"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      # El gate arranca el jar en modo 'local'; estas variables tienen prioridad
+      # sobre application-it.yml, asi que en vez de H2 usa el PostgreSQL de arriba.
+      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/nur_prod_it
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # El build exige Java 21: sin esto falla con "release version 21 not supported"
+      - name: Configurar JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      # Newman se ejecuta con npx desde el gate
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Instalar Newman
+        run: npm install -g newman
+
+      # --twice ejecuta la coleccion DOS veces contra la misma base de datos: si no
+      # es repetible (datos fijos que chocan con los de la corrida anterior), aqui se ve.
+      - name: Gate de integracion (levanta la app + ejecuta la coleccion x2)
+        run: bash ./tools/validate-integration.sh --mode local --twice
+
+      - name: Resumen en la pestaña Summary
+        if: always()
+        run: |
+          # Con --twice el gate escribe report-1.json y report-2.json; se resume el ultimo.
+          DIR=ms-production-packaging/target/newman
+          REPORTE="$(ls -1 $DIR/report-2.json $DIR/report-1.json $DIR/report.json 2>/dev/null | head -1)"
+          if [ -n "$REPORTE" ] && [ -f "$REPORTE" ]; then
+            node -e "
+              const r = require(process.cwd() + '/' + process.argv[1]);
+              const s = r.run.stats;
+              const l = [];
+              l.push('## Pruebas de integracion (Newman)', '');
+              l.push('| Metrica | Ejecutadas | Fallidas |');
+              l.push('|---|---:|---:|');
+              l.push('| Requests | ' + s.requests.total + ' | ' + s.requests.failed + ' |');
+              l.push('| Aserciones | ' + s.assertions.total + ' | ' + s.assertions.failed + ' |');
+              (r.run.failures || []).forEach(f => l.push('- **' + f.source.name + '**: ' + f.error.test));
+              console.log(l.join('\n'));
+            " "$REPORTE" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Log de la aplicacion si algo fallo
+        if: failure()
+        run: tail -100 ms-production-packaging/target/newman/app-it.log || true
+
+      - name: Publicar reportes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reportes-integracion
+          path: ms-production-packaging/target/newman/
+          if-no-files-found: warn
+          retention-days: 14

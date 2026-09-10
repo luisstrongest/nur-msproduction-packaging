@@ -324,17 +324,39 @@ Reporte de cobertura: `target/site/jacoco/index.html` (requiere JDK 21).
 
 Cobertura global: **98.8 % de líneas / 99.1 % de ramas**.
 
-Detalle de la estrategia, herramientas y mapa de pruebas: [`docs/pruebas-unitarias.md`](../docs/pruebas-unitarias.md).
+Detalle de la estrategia, herramientas y mapa de pruebas: [`docs/pruebas-unitarias.md`](docs/pruebas-unitarias.md).
 
-> Las pruebas de integración (`*IT.java`) están excluidas de `mvn test` a propósito:
-> se abordan en la siguiente etapa del proyecto.
+### Pruebas de integración
+
+Las pruebas de integración no viven en `mvn test` (surefire excluye `*IT.java` a
+propósito): se ejecutan contra el microservicio **realmente levantado**, como una colección
+de Postman.
+
+```powershell
+# desde la raíz del repositorio (ddd_clean)
+.\tools\validate-integration.ps1                 # Docker + PostgreSQL real efímero
+.\tools\validate-integration.ps1 -Mode local     # H2 en memoria, sin Docker
+```
+
+Un solo comando levanta el ambiente, espera al healthcheck, ejecuta la colección con Newman
+y baja el ambiente. Resultado medido: **23 requests, 69 aserciones, 0 fallos**, en dos
+vueltas seguidas contra la misma base de datos.
+
+| Carpeta | Qué cubre |
+| :------ | :-------- |
+| `01 - Flujo correcto` | El ciclo end-to-end: orden → preparación → paquete → envasado → etiquetado → listo → orden completada |
+| `02 - Flujo incorrecto` | Los rechazos esperados (400 de validación, 409 de regla de negocio, 404), verificando código HTTP **y** cuerpo `ApiError` |
+
+Cómo levantarlo y lanzarlo: [`postman/README.md`](postman/README.md).
 
 ### Entorno de pruebas asistido por IA
 
-El repositorio incluye un entorno validado para generar y auditar pruebas con IA:
-dos subagentes (`test-writer`, `test-reviewer`), tres skills con las convenciones del
-proyecto, un gate reproducible (`tools/validate-tests.ps1` / `.sh`) y verificación
-objetiva por *mutation testing* con PIT.
+El repositorio incluye dos entornos validados para generar y auditar pruebas con IA, uno
+por nivel de prueba.
+
+**Unitarias** — dos subagentes (`test-writer`, `test-reviewer`), tres skills con las
+convenciones del proyecto, un gate reproducible (`tools/validate-tests.ps1` / `.sh`) y
+verificación objetiva por *mutation testing* con PIT.
 
 ```powershell
 # desde la raíz del repositorio (ddd_clean)
@@ -347,4 +369,19 @@ La primera pasada de PIT detectó 12 huecos de verificación que la cobertura no
 entre ellos, que se podía borrar la publicación de eventos de dominio sin que fallara
 ningún test.
 
-Guía completa: [`docs/entorno-pruebas-ai.md`](../docs/entorno-pruebas-ai.md).
+Guía completa: [`docs/entorno-pruebas-ai.md`](docs/entorno-pruebas-ai.md).
+
+**Integración** — dos subagentes (`integration-test-writer`, `integration-test-reviewer`),
+tres skills (el contrato de la API, las convenciones de la colección y la lista de revisión)
+y un gate que levanta el ambiente y ejecuta la colección
+(`tools/validate-integration.ps1` / `.sh`).
+
+```powershell
+.\tools\validate-integration.ps1 -Mode local -Twice   # exige dos vueltas en verde
+```
+
+Aquí la verificación que no se puede falsificar no es el *mutation testing*, sino la
+**repetibilidad**: una colección que solo pasa con la base de datos recién creada no es una
+prueba, y es un fallo que el resumen en verde de la primera vuelta no muestra.
+
+Guía completa: [`docs/pruebas-integracion.md`](docs/pruebas-integracion.md).

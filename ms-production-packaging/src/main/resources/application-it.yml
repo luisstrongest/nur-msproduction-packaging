@@ -1,0 +1,32 @@
+# =============================================================================
+# Perfil "it" - modo rapido de las PRUEBAS DE INTEGRACION (sin Docker).
+#
+#   java -jar target/ms-production-packaging-0.0.1-SNAPSHOT.jar --spring.profiles.active=it
+#
+# Reemplaza el datasource de application.yml por H2 en memoria con create-drop:
+# el esquema y los datos se crean al arrancar y desaparecen al parar, de modo que
+# cada ejecucion de la coleccion Postman parte de una base vacia.
+#
+# El modo de referencia sigue siendo docker-compose.integration.yml (PostgreSQL
+# real, mismo motor que produccion). Este perfil existe para iterar rapido.
+# =============================================================================
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:produccion_it;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+    show-sql: false
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console

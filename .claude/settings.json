@@ -8,9 +8,16 @@
       "Bash(./mvnw:*)",
       "Bash(./tools/validate-tests.sh:*)",
       "Bash(../tools/validate-tests.sh:*)",
+      "Bash(./tools/validate-integration.sh:*)",
       "PowerShell(.\\mvnw.cmd:*)",
       "PowerShell(.\\tools\\validate-tests.ps1:*)",
       "PowerShell(..\\tools\\validate-tests.ps1:*)",
+      "PowerShell(.\\tools\\validate-integration.ps1:*)",
+      "PowerShell(..\\tools\\validate-integration.ps1:*)",
+      "Bash(newman run:*)",
+      "Bash(npx --yes --registry=https://registry.npmjs.org newman:*)",
+      "Bash(docker compose -f docker-compose.integration.yml:*)",
+      "Bash(curl -s http://localhost:8082/*)",
       "Bash(git status:*)",
       "Bash(git diff:*)",
       "Bash(git log:*)",
@@ -19,7 +26,8 @@
     "ask": [
       "Edit(ms-production-packaging/src/main/**)",
       "Write(ms-production-packaging/src/main/**)",
-      "Edit(**/pom.xml)"
+      "Edit(**/pom.xml)",
+      "Edit(docker-compose.integration.yml)"
     ],
     "deny": [
       "Bash(git push:*)",
@@ -27,6 +35,7 @@
       "Bash(rm -rf:*)",
       "Bash(./mvnw deploy:*)",
       "Bash(mvn deploy:*)",
+      "Bash(docker system prune:*)",
       "Read(./**/.env)"
     ]
   }

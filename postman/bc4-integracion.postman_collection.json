@@ -1,0 +1,1280 @@
+{
+  "info": {
+    "name": "BC4 - Pruebas de integracion (ms-production-packaging)",
+    "description": "PRUEBAS DE INTEGRACION del microservicio BC4 (Produccion y Envasado) sobre la API REST realmente levantada.\n\nQue valida esto y no validan los tests unitarios: enrutamiento HTTP y serializacion JSON, la validacion @Valid de los DTOs, el mapeo de excepciones de dominio a codigos HTTP del GlobalExceptionHandler, y el viaje completo por JPA/Hibernate hasta una base de datos real y de vuelta. Los tests unitarios mockean todo eso.\n\nDOS CARPETAS:\n  01 - Flujo correcto   : el ciclo end-to-end de BC4, 12 requests encadenados.\n  02 - Flujo incorrecto : escenarios de error con su codigo HTTP y su ApiError.\n\nCOMO EJECUTARLA:\n  - Postman: importar tambien local.postman_environment.json, seleccionar el\n    environment y usar Runner sobre la coleccion completa (en orden).\n  - Newman:  npx newman run postman/bc4-integracion.postman_collection.json -e postman/local.postman_environment.json\n  - Gate:    .\\tools\\validate-integration.ps1  (levanta el ambiente y la corre)\n\nREPETIBLE: las fechas de produccion se generan aleatorias en pre-request porque\nla regla de negocio admite una sola orden por fecha. Ejecutarla dos veces seguidas\ncontra la misma base de datos debe dar verde las dos veces.\n\nAmbiente por defecto: http://localhost:8082 (docker-compose.integration.yml).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 - Flujo correcto (camino feliz end-to-end)",
+      "description": "Ciclo completo de BC4 sobre el microservicio realmente levantado: se genera una orden de produccion, se prepara en cocina, se crea el paquete del paciente, se envasa, se etiqueta y se marca listo para BC5, y finalmente se completa la orden.\n\nCada request encadena su resultado en variables de coleccion y comprueba el ESTADO DEVUELTO, no solo el codigo HTTP. Los GET intercalados verifican que el estado sobrevive al viaje por JPA/Hibernate hasta la base de datos y vuelve igual: eso es exactamente lo que los tests unitarios no pueden ver, porque mockean el repositorio.\n\nORDEN OBLIGATORIO: el paquete se crea ANTES de completar la orden. Una orden COMPLETADA es inmutable (OrdenYaCompletadaException), asi que registrar un paquete sobre ella fallaria.",
+      "item": [
+        {
+          "name": "1.1 Generar la orden de produccion",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Fecha unica por ejecucion: la regla de negocio permite UNA orden por fecha.",
+                  "// Con una fecha fija esta coleccion solo seria verde la primera vez.",
+                  "const dias = Math.floor(Math.random() * 4000) + 1;",
+                  "const fecha = new Date(Date.now() + dias * 86400000).toISOString().slice(0, 10);",
+                  "pm.collectionVariables.set('fechaProduccion', fecha);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 201 CREATED', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "pm.collectionVariables.set('ordenId', res.id);",
+                  "pm.collectionVariables.set('recetaId', res.items[0].recetaId);",
+                  "pm.collectionVariables.set('recetaId2', res.items[1].recetaId);",
+                  "",
+                  "pm.test('Devuelve el id de la orden generada', function () {",
+                  "    pm.expect(res.id).to.be.a('string').and.to.not.be.empty;",
+                  "});",
+                  "",
+                  "pm.test('La orden nace en estado PENDIENTE', function () {",
+                  "    pm.expect(res.estado).to.eql('PENDIENTE');",
+                  "});",
+                  "",
+                  "pm.test('Conserva la fecha de produccion solicitada', function () {",
+                  "    pm.expect(res.fechaProduccion).to.eql(pm.collectionVariables.get('fechaProduccion'));",
+                  "});",
+                  "",
+                  "pm.test('totalPorciones = pacientes por receta (12 + 8 = 20)', function () {",
+                  "    pm.expect(res.totalPorciones).to.eql(20);",
+                  "});",
+                  "",
+                  "pm.test('Los dos items nacen PENDIENTE con su porcion mapeada', function () {",
+                  "    pm.expect(res.items).to.have.lengthOf(2);",
+                  "    pm.expect(res.items.map(function (i) { return i.estado; })).to.eql(['PENDIENTE', 'PENDIENTE']);",
+                  "    pm.expect(res.items[0].porcionUnidad).to.eql('GRAMOS');",
+                  "    pm.expect(res.items[0].porcionCantidad).to.eql(250);",
+                  "    pm.expect(res.items[1].porcionUnidad).to.eql('MILILITROS');",
+                  "});",
+                  "",
+                  "pm.test('Todavia no tiene paquetes asociados', function () {",
+                  "    pm.expect(res.paqueteIds).to.be.an('array').that.is.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ordenes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ordenes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fechaProduccion\": \"{{fechaProduccion}}\",\n  \"items\": [\n    {\n      \"recetaId\": \"REC-001\",\n      \"nombreReceta\": \"Pure de zapallo con pollo\",\n      \"numeroPacientes\": 12,\n      \"cantidadPorcion\": 250,\n      \"unidadMedida\": \"GRAMOS\",\n      \"descripcionPorcion\": \"Porcion individual estandar\"\n    },\n    {\n      \"recetaId\": \"REC-002\",\n      \"nombreReceta\": \"Sopa de verduras\",\n      \"numeroPacientes\": 8,\n      \"cantidadPorcion\": 300,\n      \"unidadMedida\": \"MILILITROS\",\n      \"descripcionPorcion\": \"Racion tibia de 300 ml\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Simula el CalendarioConsolidado que BC3 publica. La fecha se genera aleatoria en el pre-request porque existe la regla \"una sola orden por fecha\": con una fecha fija la coleccion pasaria la primera vez y devolveria 409 en la segunda."
+          },
+          "response": []
+        },
+        {
+          "name": "1.2 Consultar la orden recien creada",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('La orden persistida es la misma que se creo', function () {",
+                  "    pm.expect(res.id).to.eql(pm.collectionVariables.get('ordenId'));",
+                  "    pm.expect(res.fechaProduccion).to.eql(pm.collectionVariables.get('fechaProduccion'));",
+                  "    pm.expect(res.estado).to.eql('PENDIENTE');",
+                  "});",
+                  "",
+                  "pm.test('El mapeo JPA conservo los dos items y su porcion', function () {",
+                  "    pm.expect(res.items).to.have.lengthOf(2);",
+                  "    pm.expect(res.items[0].nombreReceta).to.eql('Pure de zapallo con pollo');",
+                  "    pm.expect(res.items[0].cantidadTotal).to.eql(12);",
+                  "    pm.expect(res.items[1].cantidadTotal).to.eql(8);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ordenes/{{ordenId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ordenes",
+                "{{ordenId}}"
+              ]
+            },
+            "description": "Prueba de ida y vuelta por la persistencia: la orden se lee de nuevo desde la base de datos. Si el mapeo dominio <-> entidad JPA perdiera items, estado o fecha, este request lo delata (un test unitario del controller no puede, porque mockea el repositorio)."
+          },
+          "response": []
+        },
+        {
+          "name": "1.3 Iniciar la preparacion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('La orden pasa a EN_PREPARACION', function () {",
+                  "    pm.expect(res.estado).to.eql('EN_PREPARACION');",
+                  "});",
+                  "",
+                  "pm.test('Los items siguen PENDIENTE: iniciar no prepara nada', function () {",
+                  "    pm.expect(res.items.every(function (i) { return i.estado === 'PENDIENTE'; })).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ordenes/{{ordenId}}/iniciar-preparacion",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ordenes",
+                "{{ordenId}}",
+                "iniciar-preparacion"
+              ]
+            },
+            "description": "Transicion PENDIENTE -> EN_PREPARACION del agregado OrdenDeProduccion."
+          },
+          "response": []
+        },
+        {
+          "name": "1.4 Marcar preparado el primer item (REC-001)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "function item(id) {",
+                  "    return res.items.find(function (i) { return i.recetaId === id; });",
+                  "}",
+                  "",
+                  "pm.test('REC-001 queda PREPARADO', function () {",
+                  "    pm.expect(item(pm.collectionVariables.get('recetaId')).estado).to.eql('PREPARADO');",
+                  "});",
+                  "",
+                  "pm.test('REC-002 NO se toco: sigue PENDIENTE', function () {",
+                  "    pm.expect(item(pm.collectionVariables.get('recetaId2')).estado).to.eql('PENDIENTE');",
+                  "});",
+                  "",
+                  "pm.test('La orden sigue EN_PREPARACION', function () {",
+                  "    pm.expect(res.estado).to.eql('EN_PREPARACION');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ordenes/{{ordenId}}/items/{{recetaId}}/preparar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ordenes",
+                "{{ordenId}}",
+                "items",
+                "{{recetaId}}",
+                "preparar"
+              ]
+            },
+            "description": "Solo debe cambiar el item indicado. Se comprueba item a item, no en bloque."
+          },
+          "response": []
+        },
+        {
+          "name": "1.5 Marcar preparado el segundo item (REC-002)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('Los dos items quedan PREPARADO', function () {",
+                  "    pm.expect(res.items.map(function (i) { return i.estado; })).to.eql(['PREPARADO', 'PREPARADO']);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ordenes/{{ordenId}}/items/{{recetaId2}}/preparar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ordenes",
+                "{{ordenId}}",
+                "items",
+                "{{recetaId2}}",
+                "preparar"
+              ]
+            },
+            "description": "Con esto se cumple la invariante que exige completar: todos los items PREPARADO."
+          },
+          "response": []
+        },
+        {
+          "name": "1.6 Crear el paquete del paciente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 201 CREATED', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "pm.collectionVariables.set('paqueteId', res.id);",
+                  "",
+                  "pm.test('El paquete nace en ENVASADO_PENDIENTE', function () {",
+                  "    pm.expect(res.estado).to.eql('ENVASADO_PENDIENTE');",
+                  "});",
+                  "",
+                  "pm.test('Queda vinculado al paciente y a su orden', function () {",
+                  "    pm.expect(res.pacienteId).to.eql('PAC-1001');",
+                  "    pm.expect(res.ordenId).to.eql(pm.collectionVariables.get('ordenId'));",
+                  "});",
+                  "",
+                  "pm.test('Todavia no tiene etiqueta', function () {",
+                  "    pm.expect(res.etiqueta).to.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/paquetes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "paquetes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pacienteId\": \"PAC-1001\",\n  \"ordenId\": \"{{ordenId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Cruza los dos agregados: el paquete se crea y, en la misma transaccion, la orden registra su id. Debe ocurrir ANTES de completar la orden."
+          },
+          "response": []
+        },
+        {
+          "name": "1.7 Verificar que la orden registro el paquete",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('paqueteIds contiene el paquete recien creado', function () {",
+                  "    pm.expect(res.paqueteIds).to.include(pm.collectionVariables.get('paqueteId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ordenes/{{ordenId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ordenes",
+                "{{ordenId}}"
+              ]
+            },
+            "description": "Consistencia entre agregados a traves de la base de datos: la orden debe haber persistido el id del paquete creado en el request anterior."
+          },
+          "response": []
+        },
+        {
+          "name": "1.8 Registrar el envasado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('El paquete pasa a ENVASADO', function () {",
+                  "    pm.expect(res.estado).to.eql('ENVASADO');",
+                  "});",
+                  "",
+                  "pm.test('Envasar no genera etiqueta todavia', function () {",
+                  "    pm.expect(res.etiqueta).to.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/paquetes/{{paqueteId}}/envasar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "paquetes",
+                "{{paqueteId}}",
+                "envasar"
+              ]
+            },
+            "description": "Transicion ENVASADO_PENDIENTE -> ENVASADO."
+          },
+          "response": []
+        },
+        {
+          "name": "1.9 Generar la etiqueta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('El paquete pasa a ETIQUETADO', function () {",
+                  "    pm.expect(res.estado).to.eql('ETIQUETADO');",
+                  "});",
+                  "",
+                  "pm.test('La etiqueta lleva el nombre del paciente', function () {",
+                  "    pm.expect(res.etiqueta.nombrePaciente).to.eql('Maria Perez');",
+                  "});",
+                  "",
+                  "pm.test('La direccion sale con el formato de impresion del dominio', function () {",
+                  "    pm.expect(res.etiqueta.direccion).to.eql('Av. Mutualista 450, Ref: Edificio azul, piso 2 - Santa Cruz');",
+                  "});",
+                  "",
+                  "pm.test('El codigo sigue el formato PKG-XXXXXXXX', function () {",
+                  "    pm.expect(res.etiqueta.codigoIdentificacion).to.match(/^PKG-[0-9A-F]{8}$/);",
+                  "});",
+                  "",
+                  "pm.test('Registra la fecha de generacion', function () {",
+                  "    pm.expect(res.etiqueta.fechaGeneracion).to.be.a('string').and.to.not.be.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/paquetes/{{paqueteId}}/etiquetar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "paquetes",
+                "{{paqueteId}}",
+                "etiquetar"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreCompleto\": \"Maria Perez\",\n  \"calle\": \"Av. Mutualista\",\n  \"numero\": \"450\",\n  \"referencia\": \"Edificio azul, piso 2\",\n  \"ciudad\": \"Santa Cruz\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Transicion ENVASADO -> ETIQUETADO. Verifica el formato del codigo (PKG-XXXXXXXX) y el formato de impresion de la direccion, que se construyen en el dominio y viajan hasta el JSON."
+          },
+          "response": []
+        },
+        {
+          "name": "1.10 Marcar el paquete como LISTO",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('El paquete queda LISTO para transferir a BC5', function () {",
+                  "    pm.expect(res.estado).to.eql('LISTO');",
+                  "});",
+                  "",
+                  "pm.test('La etiqueta se conserva intacta tras la transicion', function () {",
+                  "    pm.expect(res.etiqueta).to.not.be.null;",
+                  "    pm.expect(res.etiqueta.codigoIdentificacion).to.match(/^PKG-[0-9A-F]{8}$/);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/paquetes/{{paqueteId}}/marcar-listo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "paquetes",
+                "{{paqueteId}}",
+                "marcar-listo"
+              ]
+            },
+            "description": "Transicion ETIQUETADO -> LISTO. Es la que emite el evento PaqueteListo que consume BC5."
+          },
+          "response": []
+        },
+        {
+          "name": "1.11 Completar la orden",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('La orden queda COMPLETADA', function () {",
+                  "    pm.expect(res.estado).to.eql('COMPLETADA');",
+                  "});",
+                  "",
+                  "pm.test('Se completa con el paquete generado registrado', function () {",
+                  "    pm.expect(res.paqueteIds).to.include(pm.collectionVariables.get('paqueteId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ordenes/{{ordenId}}/completar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ordenes",
+                "{{ordenId}}",
+                "completar"
+              ]
+            },
+            "description": "Transicion EN_PREPARACION -> COMPLETADA. Emite OrdenCompletada con los ids de los paquetes generados."
+          },
+          "response": []
+        },
+        {
+          "name": "1.12 Listar los paquetes de la orden",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('Devuelve exactamente el paquete de esta orden', function () {",
+                  "    pm.expect(res).to.be.an('array').with.lengthOf(1);",
+                  "    pm.expect(res[0].id).to.eql(pm.collectionVariables.get('paqueteId'));",
+                  "});",
+                  "",
+                  "pm.test('El paquete quedo LISTO y con su etiqueta en base de datos', function () {",
+                  "    pm.expect(res[0].estado).to.eql('LISTO');",
+                  "    pm.expect(res[0].etiqueta).to.not.be.null;",
+                  "    pm.expect(res[0].etiqueta.nombrePaciente).to.eql('Maria Perez');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/paquetes?ordenId={{ordenId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "paquetes"
+              ],
+              "query": [
+                {
+                  "key": "ordenId",
+                  "value": "{{ordenId}}"
+                }
+              ]
+            },
+            "description": "Consulta filtrada por ordenId: es la vista que usaria BC5 para recoger los paquetes del dia. Cierra el flujo comprobando el estado final ya persistido."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 - Flujo incorrecto (errores esperados)",
+      "description": "Comprueba que la API rechaza lo que debe rechazar, con el codigo HTTP correcto y un cuerpo ApiError util. Es la parte que valida el GlobalExceptionHandler de punta a punta: una excepcion de dominio tiene que llegar al cliente como 409, no como 500.\n\nLa carpeta es AUTOCONTENIDA: los tres primeros requests (2.0) preparan su propio escenario, asi que no depende de que se haya ejecutado la carpeta 01.\n\nMapeo verificado:\n  @Valid fallido            -> 400 Validacion fallida\n  IllegalStateException     -> 409 Conflicto de estado\n  DomainException           -> 409 Regla de negocio violada\n  NoSuchElementException    -> 404 Recurso no encontrado",
+      "item": [
+        {
+          "name": "2.0a [setup] Generar la orden auxiliar del escenario",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Fecha propia de esta carpeta, distinta de la del flujo correcto.",
+                  "const dias = Math.floor(Math.random() * 4000) + 4001;",
+                  "const fecha = new Date(Date.now() + dias * 86400000).toISOString().slice(0, 10);",
+                  "pm.collectionVariables.set('fechaAlterna', fecha);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[setup] La orden auxiliar se crea correctamente', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "pm.collectionVariables.set('ordenErrorId', res.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ordenes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ordenes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fechaProduccion\": \"{{fechaAlterna}}\",\n  \"items\": [\n    {\n      \"recetaId\": \"REC-001\",\n      \"nombreReceta\": \"Pure de zapallo con pollo\",\n      \"numeroPacientes\": 12,\n      \"cantidadPorcion\": 250,\n      \"unidadMedida\": \"GRAMOS\",\n      \"descripcionPorcion\": \"Porcion individual estandar\"\n    },\n    {\n      \"recetaId\": \"REC-002\",\n      \"nombreReceta\": \"Sopa de verduras\",\n      \"numeroPacientes\": 8,\n      \"cantidadPorcion\": 300,\n      \"unidadMedida\": \"MILILITROS\",\n      \"descripcionPorcion\": \"Racion tibia de 300 ml\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Escenario propio de esta carpeta. Su fecha se guarda en fechaAlterna para provocar despues el conflicto por fecha duplicada."
+          },
+          "response": []
+        },
+        {
+          "name": "2.0b [setup] Iniciar su preparacion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[setup] La orden auxiliar queda EN_PREPARACION con items pendientes', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().estado).to.eql('EN_PREPARACION');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ordenes/{{ordenErrorId}}/iniciar-preparacion",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ordenes",
+                "{{ordenErrorId}}",
+                "iniciar-preparacion"
+              ]
+            },
+            "description": "Deja la orden auxiliar EN_PREPARACION con los dos items todavia sin preparar: es el estado que necesita el test 2.7."
+          },
+          "response": []
+        },
+        {
+          "name": "2.0c [setup] Crear el paquete auxiliar",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[setup] El paquete auxiliar queda ENVASADO_PENDIENTE', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    pm.expect(pm.response.json().estado).to.eql('ENVASADO_PENDIENTE');",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('paqueteErrorId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/paquetes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "paquetes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pacienteId\": \"PAC-9099\",\n  \"ordenId\": \"{{ordenErrorId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Paquete en ENVASADO_PENDIENTE (sin envasar): es el estado que necesita el test 2.5."
+          },
+          "response": []
+        },
+        {
+          "name": "2.1 Orden sin fecha y sin items -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400 BAD REQUEST', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "const err = pm.response.json();",
+                  "pm.test('El cuerpo es un ApiError con la forma del contrato', function () {",
+                  "    pm.expect(err).to.have.all.keys('timestamp', 'status', 'error', 'mensaje', 'detalles');",
+                  "    pm.expect(err.status).to.eql(400);",
+                  "    pm.expect(err.error).to.eql('Validacion fallida');",
+                  "});",
+                  "",
+                  "pm.test('Informa los DOS campos invalidos, no solo el primero', function () {",
+                  "    const detalles = err.detalles.join(' | ');",
+                  "    pm.expect(err.detalles).to.have.lengthOf(2);",
+                  "    pm.expect(detalles).to.include('fechaProduccion');",
+                  "    pm.expect(detalles).to.include('items');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ordenes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ordenes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": []\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Validacion de DTO (@NotNull sobre fechaProduccion y @NotEmpty sobre items). La peticion no debe llegar siquiera al dominio."
+          },
+          "response": []
+        },
+        {
+          "name": "2.2 Item con numeroPacientes = 0 -> 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 400 BAD REQUEST', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "const err = pm.response.json();",
+                  "pm.test('El cuerpo es un ApiError con la forma del contrato', function () {",
+                  "    pm.expect(err).to.have.all.keys('timestamp', 'status', 'error', 'mensaje', 'detalles');",
+                  "    pm.expect(err.status).to.eql(400);",
+                  "    pm.expect(err.error).to.eql('Validacion fallida');",
+                  "});",
+                  "",
+                  "pm.test('Senala el campo exacto dentro de la lista de items', function () {",
+                  "    const detalles = err.detalles.join(' | ');",
+                  "    pm.expect(detalles).to.include('numeroPacientes');",
+                  "    pm.expect(detalles).to.include('mayor a cero');",
+                  "});",
+                  "",
+                  "pm.test('No se creo ninguna orden: el cuerpo es un error, no una orden', function () {",
+                  "    pm.expect(err).to.not.have.property('id');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ordenes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ordenes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fechaProduccion\": \"2030-01-15\",\n  \"items\": [\n    {\n      \"recetaId\": \"REC-777\",\n      \"nombreReceta\": \"Receta imposible\",\n      \"numeroPacientes\": 0,\n      \"cantidadPorcion\": 250,\n      \"unidadMedida\": \"GRAMOS\",\n      \"descripcionPorcion\": \"Porcion estandar\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Validacion anidada (@Valid sobre la lista + @Positive en el item). Comprueba que el error identifica el campo dentro del elemento de la lista."
+          },
+          "response": []
+        },
+        {
+          "name": "2.3 Segunda orden para la misma fecha -> 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 409 CONFLICT', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "const err = pm.response.json();",
+                  "pm.test('El cuerpo es un ApiError con la forma del contrato', function () {",
+                  "    pm.expect(err).to.have.all.keys('timestamp', 'status', 'error', 'mensaje', 'detalles');",
+                  "    pm.expect(err.status).to.eql(409);",
+                  "    pm.expect(err.error).to.eql('Conflicto de estado');",
+                  "});",
+                  "",
+                  "pm.test('El mensaje nombra la fecha en conflicto', function () {",
+                  "    pm.expect(err.mensaje).to.include('Ya existe una orden');",
+                  "    pm.expect(err.mensaje).to.include(pm.collectionVariables.get('fechaAlterna'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ordenes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ordenes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fechaProduccion\": \"{{fechaAlterna}}\",\n  \"items\": [\n    {\n      \"recetaId\": \"REC-001\",\n      \"nombreReceta\": \"Pure de zapallo con pollo\",\n      \"numeroPacientes\": 12,\n      \"cantidadPorcion\": 250,\n      \"unidadMedida\": \"GRAMOS\",\n      \"descripcionPorcion\": \"Porcion individual estandar\"\n    },\n    {\n      \"recetaId\": \"REC-002\",\n      \"nombreReceta\": \"Sopa de verduras\",\n      \"numeroPacientes\": 8,\n      \"cantidadPorcion\": 300,\n      \"unidadMedida\": \"MILILITROS\",\n      \"descripcionPorcion\": \"Racion tibia de 300 ml\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Regla de negocio de la capa de aplicacion: existe a lo sumo una orden por fecha de produccion. Reutiliza la fecha de la orden auxiliar creada en 2.0a."
+          },
+          "response": []
+        },
+        {
+          "name": "2.4 Consultar una orden inexistente -> 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 404 NOT FOUND', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "const err = pm.response.json();",
+                  "pm.test('El cuerpo es un ApiError con la forma del contrato', function () {",
+                  "    pm.expect(err).to.have.all.keys('timestamp', 'status', 'error', 'mensaje', 'detalles');",
+                  "    pm.expect(err.status).to.eql(404);",
+                  "    pm.expect(err.error).to.eql('Recurso no encontrado');",
+                  "});",
+                  "",
+                  "pm.test('El mensaje dice que ese id no existe', function () {",
+                  "    pm.expect(err.mensaje).to.include('No existe una OrdenDeProduccion');",
+                  "    pm.expect(err.mensaje).to.include('00000000-0000-0000-0000-000000000000');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ordenes/00000000-0000-0000-0000-000000000000",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ordenes",
+                "00000000-0000-0000-0000-000000000000"
+              ]
+            },
+            "description": "NoSuchElementException del servicio de aplicacion mapeada a 404. El id tiene forma valida de UUID: no es un problema de formato, es que no existe."
+          },
+          "response": []
+        },
+        {
+          "name": "2.5 Etiquetar un paquete sin envasar -> 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 409 CONFLICT', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "const err = pm.response.json();",
+                  "pm.test('El cuerpo es un ApiError con la forma del contrato', function () {",
+                  "    pm.expect(err).to.have.all.keys('timestamp', 'status', 'error', 'mensaje', 'detalles');",
+                  "    pm.expect(err.status).to.eql(409);",
+                  "    pm.expect(err.error).to.eql('Regla de negocio violada');",
+                  "});",
+                  "",
+                  "pm.test('El mensaje explica la invariante violada', function () {",
+                  "    pm.expect(err.mensaje).to.include('no ha sido envasado');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/paquetes/{{paqueteErrorId}}/etiquetar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "paquetes",
+                "{{paqueteErrorId}}",
+                "etiquetar"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreCompleto\": \"Maria Perez\",\n  \"calle\": \"Av. Mutualista\",\n  \"numero\": \"450\",\n  \"referencia\": \"Edificio azul, piso 2\",\n  \"ciudad\": \"Santa Cruz\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Invariante del agregado PaqueteEtiquetado: el envasado precede al etiquetado (EtiquetaSinEnvasadoException). El paquete auxiliar sigue en ENVASADO_PENDIENTE."
+          },
+          "response": []
+        },
+        {
+          "name": "2.6 El paquete no quedo corrupto tras el error",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('Sigue en ENVASADO_PENDIENTE y sin etiqueta', function () {",
+                  "    pm.expect(res.estado).to.eql('ENVASADO_PENDIENTE');",
+                  "    pm.expect(res.etiqueta).to.be.null;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/paquetes/{{paqueteErrorId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "paquetes",
+                "{{paqueteErrorId}}"
+              ]
+            },
+            "description": "Comprobacion de que el rechazo no dejo estado a medias: el paquete sigue en ENVASADO_PENDIENTE y sin etiqueta. Un error de negocio no debe persistir nada."
+          },
+          "response": []
+        },
+        {
+          "name": "2.7 Completar una orden con items sin preparar -> 409",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 409 CONFLICT', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "const err = pm.response.json();",
+                  "pm.test('El cuerpo es un ApiError con la forma del contrato', function () {",
+                  "    pm.expect(err).to.have.all.keys('timestamp', 'status', 'error', 'mensaje', 'detalles');",
+                  "    pm.expect(err.status).to.eql(409);",
+                  "    pm.expect(err.error).to.eql('Regla de negocio violada');",
+                  "});",
+                  "",
+                  "pm.test('El mensaje explica que faltan items por preparar', function () {",
+                  "    pm.expect(err.mensaje).to.include('items sin preparar');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ordenes/{{ordenErrorId}}/completar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ordenes",
+                "{{ordenErrorId}}",
+                "completar"
+              ]
+            },
+            "description": "Invariante del agregado OrdenDeProduccion: solo se completa si todos los items estan PREPARADO (ItemsPendientesException). La orden auxiliar esta EN_PREPARACION con los dos items pendientes."
+          },
+          "response": []
+        },
+        {
+          "name": "2.8 La orden no quedo COMPLETADA tras el error",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('Sigue EN_PREPARACION con sus items PENDIENTE', function () {",
+                  "    pm.expect(res.estado).to.eql('EN_PREPARACION');",
+                  "    pm.expect(res.items.every(function (i) { return i.estado === 'PENDIENTE'; })).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ordenes/{{ordenErrorId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ordenes",
+                "{{ordenErrorId}}"
+              ]
+            },
+            "description": "Igual que 2.6, pero sobre la orden: el intento fallido de completar no debe haber cambiado el estado en base de datos."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8082",
+      "type": "string"
+    },
+    {
+      "key": "fechaProduccion",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ordenId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "recetaId",
+      "value": "REC-001",
+      "type": "string"
+    },
+    {
+      "key": "recetaId2",
+      "value": "REC-002",
+      "type": "string"
+    },
+    {
+      "key": "paqueteId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "fechaAlterna",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ordenErrorId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "paqueteErrorId",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

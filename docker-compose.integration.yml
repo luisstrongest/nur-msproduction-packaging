@@ -1,0 +1,64 @@
+# =============================================================================
+# Ambiente de PRUEBAS DE INTEGRACION - BC4 (ms-production-packaging)
+#
+# Levanta el microservicio real contra un PostgreSQL real, aislado del entorno
+# de desarrollo:
+#
+#   - la base de datos es EFIMERA (tmpfs + create-drop): cada `up` arranca vacia,
+#     que es lo que hace repetible la coleccion de Postman;
+#   - los puertos por defecto no chocan con una instancia de desarrollo
+#     (55432 para Postgres); el de la app se puede mover con IT_PORT;
+#   - la app no arranca hasta que la BD responde (depends_on: service_healthy).
+#
+# Uso:
+#   docker compose -f docker-compose.integration.yml up -d --build
+#   docker compose -f docker-compose.integration.yml down -v
+#
+# Normalmente no se invoca a mano: lo hace tools/validate-integration.ps1.
+# =============================================================================
+
+name: bc4-integracion
+
+services:
+
+  db-it:
+    image: postgres:16-alpine
+    container_name: bc4-it-db
+    environment:
+      POSTGRES_DB: nur_prod_it
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    # Datos en RAM: se pierden al bajar el contenedor. Es lo que queremos.
+    tmpfs:
+      - /var/lib/postgresql/data
+    ports:
+      - "${IT_DB_PORT:-55432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d nur_prod_it"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  app-it:
+    build:
+      context: ./ms-production-packaging
+    container_name: bc4-it-app
+    environment:
+      # Sobrescriben application.yml sin tocarlo (binding relajado de Spring Boot)
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db-it:5432/nur_prod_it
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
+      SPRING_JPA_SHOW_SQL: "false"
+    ports:
+      - "${IT_PORT:-8082}:8082"
+    depends_on:
+      db-it:
+        condition: service_healthy
+    healthcheck:
+      # La imagen es alpine: wget viene en busybox, curl no esta instalado.
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8082/actuator/health | grep -q UP"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 20s
