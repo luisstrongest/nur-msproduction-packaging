@@ -1,0 +1,102 @@
+# =============================================================================
+# Validacion independiente de las PRUEBAS DE CONTRATO (Pact).
+#
+# Es la pieza que convierte el entorno local en un entorno VALIDADO: el mismo gate
+# que ejecuta el agente de IA en la maquina del desarrollador
+# (tools/validate-contracts.sh) corre aqui sobre una maquina limpia.
+#
+# El ciclo completo en un solo job, que es justo lo que el contract testing evita
+# en un despliegue real: aqui los dos lados viven en el mismo repositorio, asi que
+# se ejecutan seguidos.
+#
+#   1. el CONSUMIDOR (bc5-logistic-consumer) genera el pacto
+#   2. el PROVEEDOR (ms-production-packaging) lo verifica levantado de verdad
+#   3. --break-check exige que el pacto ALTERADO haga fallar la verificacion:
+#      sin esto, un contrato que no comprueba nada pasaria en verde para siempre
+#
+# Ademas se comprueba que el pacto se regenera IDENTICO al commiteado: si cambia,
+# o alguien lo edito a mano, o hay algo no determinista dentro del contrato.
+# =============================================================================
+name: contract-tests
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Contract testing (Pact)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # El build exige Java 21: sin esto falla con "release version 21 not supported"
+      - name: Configurar JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Permisos de los wrappers
+        run: chmod +x ms-production-packaging/mvnw contract-testing/bc5-logistic-consumer/mvnw tools/validate-contracts.sh
+
+      # El gate completo. La verificacion del proveedor usa el perfil 'it' (H2 en
+      # memoria): no hace falta base de datos de servicio en este nivel, porque lo
+      # que se valida es la FORMA del mensaje, no la persistencia.
+      - name: Consumidor -> pacto -> proveedor (+ falsabilidad)
+        run: ./tools/validate-contracts.sh --break-check
+
+      - name: El pacto regenerado debe ser identico al commiteado
+        run: |
+          if ! git diff --quiet -- ms-production-packaging/src/test/resources/pacts; then
+            echo "::error::El pacto regenerado difiere del commiteado."
+            echo "Causas habituales: se edito el .json a mano, o el contrato tiene un valor"
+            echo "no determinista (una fecha real, un UUID aleatorio como valor exacto)."
+            git diff -- ms-production-packaging/src/test/resources/pacts
+            exit 1
+          fi
+          echo "El pacto se regenera identico."
+
+      - name: Resumen del contrato
+        if: always()
+        run: |
+          PACT=ms-production-packaging/src/test/resources/pacts/ms-logistic-delivery-ms-production-packaging.json
+          if [ -f "$PACT" ]; then
+            {
+              echo "## Contrato verificado"
+              echo ""
+              python3 - "$PACT" <<'PY'
+          import json, sys
+          d = json.load(open(sys.argv[1], encoding="utf-8"))
+          print("**%s -> %s** - %d interacciones\n" % (
+              d["consumer"]["name"], d["provider"]["name"], len(d["interactions"])))
+          print("| Peticion | Interaccion | Estado previo | HTTP |")
+          print("|---|---|---|---|")
+          for i in d["interactions"]:
+              req = i["request"]
+              ruta = req["path"]
+              q = req.get("query")
+              if q:
+                  ruta += "?" + "&".join("%s=%s" % (k, ",".join(v)) for k, v in q.items())
+              estados = "; ".join(s["name"] for s in i.get("providerStates", []))
+              print("| `%s %s` | %s | %s | %s |" % (
+                  req["method"], ruta, i["description"], estados, i["response"]["status"]))
+          PY
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Publicar reportes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reportes-contrato
+          path: |
+            ms-production-packaging/src/test/resources/pacts/
+            ms-production-packaging/target/failsafe-reports/
+            contract-testing/bc5-logistic-consumer/target/surefire-reports/
+          if-no-files-found: warn
+          retention-days: 14

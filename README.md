@@ -349,9 +349,34 @@ vueltas seguidas contra la misma base de datos.
 
 Cómo levantarlo y lanzarlo: [`postman/README.md`](postman/README.md).
 
+### Pruebas de contrato (Pact)
+
+Un nivel por encima de la integración: las pruebas de integración comprueban que BC4
+funciona; las de contrato comprueban que **BC5 puede consumirlo**. El consumidor
+(`ms-logistic-delivery`) declara lo que necesita, eso genera un **pacto**, y BC4 demuestra
+contra sí mismo que lo cumple — sin levantar los dos servicios a la vez.
+
+```powershell
+# desde la raíz del repositorio (ddd_clean)
+.\tools\validate-contracts.ps1                # consumidor -> pacto -> proveedor
+.\tools\validate-contracts.ps1 -BreakCheck    # además, exige que el pacto alterado FALLE
+```
+
+Resultado medido: **4 interacciones** en el pacto (3 de éxito + 1 de error 404),
+**4 de 4 verificadas** por el proveedor, y falsabilidad comprobada. No necesita Docker: la
+verificación levanta BC4 con el perfil `it` (H2 en memoria).
+
+| Lado | Dónde | Qué aporta |
+| :--- | :---- | :--------- |
+| Consumidor (BC5) | `contract-testing/bc5-logistic-consumer` | El cliente HTTP real y las 4 interacciones que declara necesitar |
+| Pacto | `ms-production-packaging/src/test/resources/pacts` | El artefacto generado — no se edita a mano |
+| Proveedor (BC4) | `…/src/test/java/…/contract/PaquetesProviderContractIT.java` | Los `@State` y la verificación con la app levantada |
+
+Guía completa: [`docs/pruebas-contrato.md`](docs/pruebas-contrato.md).
+
 ### Entorno de pruebas asistido por IA
 
-El repositorio incluye dos entornos validados para generar y auditar pruebas con IA, uno
+El repositorio incluye tres entornos validados para generar y auditar pruebas con IA, uno
 por nivel de prueba.
 
 **Unitarias** — dos subagentes (`test-writer`, `test-reviewer`), tres skills con las
@@ -385,3 +410,19 @@ Aquí la verificación que no se puede falsificar no es el *mutation testing*, s
 prueba, y es un fallo que el resumen en verde de la primera vuelta no muestra.
 
 Guía completa: [`docs/pruebas-integracion.md`](docs/pruebas-integracion.md).
+
+**Contrato** — dos subagentes (`pact-writer`, `pact-reviewer`), dos skills propios
+(convenciones de Pact en este proyecto y la lista de revisión adversarial) más el contrato
+de la API ya existente, y un gate que recorre el ciclo completo
+(`tools/validate-contracts.ps1` / `.sh`).
+
+```powershell
+.\tools\validate-contracts.ps1 -BreakCheck   # exige que el pacto alterado haga fallar la verificación
+```
+
+Aquí la verificación que no se puede falsificar es la **falsabilidad del propio pacto**: el
+gate altera una expectativa del contrato y exige que la verificación se caiga. Si pasa
+igual, el pacto tenía todo el cuerpo en *matchers* de tipo y no comprobaba nada — el fallo
+característico de un contrato generado por IA, e invisible en el resumen verde.
+
+Guía completa: [`docs/pruebas-contrato.md`](docs/pruebas-contrato.md).

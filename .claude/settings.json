@@ -14,6 +14,10 @@
       "PowerShell(..\\tools\\validate-tests.ps1:*)",
       "PowerShell(.\\tools\\validate-integration.ps1:*)",
       "PowerShell(..\\tools\\validate-integration.ps1:*)",
+      "Bash(./tools/validate-contracts.sh:*)",
+      "Bash(../tools/validate-contracts.sh:*)",
+      "PowerShell(.\\tools\\validate-contracts.ps1:*)",
+      "PowerShell(..\\tools\\validate-contracts.ps1:*)",
       "Bash(newman run:*)",
       "Bash(npx --yes --registry=https://registry.npmjs.org newman:*)",
       "Bash(docker compose -f docker-compose.integration.yml:*)",
@@ -26,10 +30,14 @@
     "ask": [
       "Edit(ms-production-packaging/src/main/**)",
       "Write(ms-production-packaging/src/main/**)",
+      "Edit(contract-testing/bc5-logistic-consumer/src/main/**)",
+      "Write(contract-testing/bc5-logistic-consumer/src/main/**)",
       "Edit(**/pom.xml)",
       "Edit(docker-compose.integration.yml)"
     ],
     "deny": [
+      "Edit(ms-production-packaging/src/test/resources/pacts/**)",
+      "Write(ms-production-packaging/src/test/resources/pacts/**)",
       "Bash(git push:*)",
       "Bash(git reset --hard:*)",
       "Bash(rm -rf:*)",

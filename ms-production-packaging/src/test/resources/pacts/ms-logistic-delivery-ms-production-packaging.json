@@ -1,0 +1,351 @@
+{
+  "consumer": {
+    "name": "ms-logistic-delivery"
+  },
+  "interactions": [
+    {
+      "description": "una consulta del detalle de ese paquete",
+      "providerStates": [
+        {
+          "name": "existe el paquete LISTO con id 7f3e0f9c-4c2a-4f0a-9d21-1a2b3c4d5e6f"
+        }
+      ],
+      "request": {
+        "headers": {
+          "Accept": "application/json"
+        },
+        "method": "GET",
+        "path": "/api/v1/paquetes/7f3e0f9c-4c2a-4f0a-9d21-1a2b3c4d5e6f"
+      },
+      "response": {
+        "body": {
+          "estado": "LISTO",
+          "etiqueta": {
+            "codigoIdentificacion": "PKG-7F3E0F9C",
+            "direccion": "Av. Mutualista 450, Ref: Edificio azul, piso 2 - Santa Cruz",
+            "fechaGeneracion": "2026-09-17T08:15:30.123",
+            "nombrePaciente": "Maria Perez"
+          },
+          "id": "7f3e0f9c-4c2a-4f0a-9d21-1a2b3c4d5e6f",
+          "ordenId": "3c1e5b77-9a48-4d5e-8b1c-2f9d0e7a6b54",
+          "pacienteId": "PAC-1001"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "body": {
+            "$.etiqueta.codigoIdentificacion": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "PKG-[0-9A-F]{8}"
+                }
+              ]
+            },
+            "$.etiqueta.direccion": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.etiqueta.fechaGeneracion": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?"
+                }
+              ]
+            },
+            "$.etiqueta.nombrePaciente": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.pacienteId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "una consulta de los paquetes listos para transferir",
+      "providerStates": [
+        {
+          "name": "existen 2 paquetes LISTOS pendientes de transferencia a BC5"
+        }
+      ],
+      "request": {
+        "headers": {
+          "Accept": "application/json"
+        },
+        "method": "GET",
+        "path": "/api/v1/paquetes"
+      },
+      "response": {
+        "body": [
+          {
+            "estado": "LISTO",
+            "etiqueta": {
+              "codigoIdentificacion": "PKG-3F2A1B4C",
+              "direccion": "Av. Mutualista 450, Ref: Edificio azul, piso 2 - Santa Cruz",
+              "fechaGeneracion": "2026-09-17T08:15:30.123",
+              "nombrePaciente": "Maria Perez"
+            },
+            "id": "e2490de5-5bd3-43d5-b7c4-526e33f71304",
+            "ordenId": "e2490de5-5bd3-43d5-b7c4-526e33f71304",
+            "pacienteId": "PAC-1001"
+          },
+          {
+            "estado": "LISTO",
+            "etiqueta": {
+              "codigoIdentificacion": "PKG-3F2A1B4C",
+              "direccion": "Av. Mutualista 450, Ref: Edificio azul, piso 2 - Santa Cruz",
+              "fechaGeneracion": "2026-09-17T08:15:30.123",
+              "nombrePaciente": "Maria Perez"
+            },
+            "id": "e2490de5-5bd3-43d5-b7c4-526e33f71304",
+            "ordenId": "e2490de5-5bd3-43d5-b7c4-526e33f71304",
+            "pacienteId": "PAC-1001"
+          }
+        ],
+        "generators": {
+          "body": {
+            "$[*].id": {
+              "type": "Uuid"
+            },
+            "$[*].ordenId": {
+              "type": "Uuid"
+            }
+          }
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "body": {
+            "$": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 2
+                }
+              ]
+            },
+            "$[*].etiqueta.codigoIdentificacion": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "PKG-[0-9A-F]{8}"
+                }
+              ]
+            },
+            "$[*].etiqueta.direccion": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$[*].etiqueta.fechaGeneracion": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?"
+                }
+              ]
+            },
+            "$[*].etiqueta.nombrePaciente": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$[*].ordenId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$[*].pacienteId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "una consulta de los paquetes de una orden de produccion",
+      "providerStates": [
+        {
+          "name": "la orden 3c1e5b77-9a48-4d5e-8b1c-2f9d0e7a6b54 tiene 1 paquete ENVASADO sin etiquetar"
+        }
+      ],
+      "request": {
+        "headers": {
+          "Accept": "application/json"
+        },
+        "method": "GET",
+        "path": "/api/v1/paquetes",
+        "query": {
+          "ordenId": [
+            "3c1e5b77-9a48-4d5e-8b1c-2f9d0e7a6b54"
+          ]
+        }
+      },
+      "response": {
+        "body": [
+          {
+            "estado": "ENVASADO",
+            "etiqueta": null,
+            "id": "e2490de5-5bd3-43d5-b7c4-526e33f71304",
+            "ordenId": "3c1e5b77-9a48-4d5e-8b1c-2f9d0e7a6b54",
+            "pacienteId": "PAC-2002"
+          }
+        ],
+        "generators": {
+          "body": {
+            "$[*].id": {
+              "type": "Uuid"
+            }
+          }
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "body": {
+            "$": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type",
+                  "min": 1
+                }
+              ]
+            },
+            "$[*].id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+                }
+              ]
+            },
+            "$[*].pacienteId": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "una consulta del detalle de un paquete que no existe",
+      "providerStates": [
+        {
+          "name": "no existe ningun paquete con id 00000000-0000-0000-0000-000000000000"
+        }
+      ],
+      "request": {
+        "headers": {
+          "Accept": "application/json"
+        },
+        "method": "GET",
+        "path": "/api/v1/paquetes/00000000-0000-0000-0000-000000000000"
+      },
+      "response": {
+        "body": {
+          "detalles": [
+
+          ],
+          "error": "Recurso no encontrado",
+          "mensaje": "No existe un PaqueteEtiquetado con id 00000000-0000-0000-0000-000000000000",
+          "status": 404,
+          "timestamp": "2026-09-17T08:15:30.123"
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "matchingRules": {
+          "body": {
+            "$.mensaje": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "No existe un PaqueteEtiquetado con id .+"
+                }
+              ]
+            },
+            "$.timestamp": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?"
+                }
+              ]
+            }
+          }
+        },
+        "status": 404
+      }
+    }
+  ],
+  "metadata": {
+    "pact-jvm": {
+      "version": "4.6.21"
+    },
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  },
+  "provider": {
+    "name": "ms-production-packaging"
+  }
+}

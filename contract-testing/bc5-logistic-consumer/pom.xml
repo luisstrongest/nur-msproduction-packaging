@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Se hereda de spring-boot-starter-parent solo por la GESTION DE VERSIONES
+         (JUnit 5, Jackson, AssertJ). Este modulo no es una aplicacion Spring:
+         representa al CLIENTE que BC5 (ms-logistic-delivery) usa para hablar con
+         BC4, y se prueba con Pact sin levantar ningun framework. -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.4.0</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.nurticenter</groupId>
+    <artifactId>bc5-logistic-consumer</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>bc5-logistic-consumer</name>
+    <description>
+        Lado CONSUMIDOR del contract testing: el cliente con el que BC5 (Entrega y
+        Logistica) consume la API de paquetes de BC4 (Produccion y Envasado).
+        Sus pruebas Pact generan el pacto que BC4 debe verificar.
+    </description>
+
+    <properties>
+        <java.version>21</java.version>
+        <pact.version>4.6.21</pact.version>
+        <!-- Donde se escribe el pacto generado: directamente en los recursos de
+             prueba del PROVEEDOR. Hace las veces de Pact Broker en este taller
+             (ver docs/pruebas-contrato.md, seccion "Por que no hay broker"). -->
+        <pact.rootDir>${project.basedir}/../../ms-production-packaging/src/test/resources/pacts</pact.rootDir>
+    </properties>
+
+    <dependencies>
+        <!-- Serializacion JSON del cliente (mismo Jackson que usa BC4 al responder) -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
+
+        <!-- Pact - lado consumidor. Levanta un servidor mock que responde lo que
+             dice el contrato y, si el cliente lo consume bien, escribe el pacto. -->
+        <dependency>
+            <groupId>au.com.dius.pact.consumer</groupId>
+            <artifactId>junit5</artifactId>
+            <version>${pact.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <includes>
+                        <include>**/*PactTest.java</include>
+                    </includes>
+                    <systemPropertyVariables>
+                        <!-- Pact lee esta propiedad para decidir donde deja el .json -->
+                        <pact.rootDir>${pact.rootDir}</pact.rootDir>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -22,6 +22,7 @@
         <jacoco.version>0.8.12</jacoco.version>
         <pitest.version>1.30.0</pitest.version>
         <pitest-junit5.version>1.2.3</pitest-junit5.version>
+        <pact.version>4.6.21</pact.version>
     </properties>
 
     <dependencies>
@@ -80,6 +81,26 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- ================================================================
+             Pact - lado PROVEEDOR (verificacion del contrato).
+
+             Reproduce contra esta aplicacion, ya levantada en un puerto real,
+             cada interaccion del pacto que publico el consumidor
+             (contract-testing/bc5-logistic-consumer).
+
+             Va en las dependencias normales, y no dentro del perfil 'contract',
+             para que PaquetesProviderContractIT compile siempre: si estuviera
+             solo en el perfil, un `mvnw verify` normal (el gate de pruebas
+             unitarias) fallaria al compilar los tests. Lo que si esta dentro del
+             perfil es su EJECUCION (maven-failsafe-plugin).
+             ================================================================ -->
+        <dependency>
+            <groupId>au.com.dius.pact.provider</groupId>
+            <artifactId>junit5spring</artifactId>
+            <version>${pact.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -224,5 +245,48 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- ====================================================================
+             Perfil 'contract': verificacion del contrato Pact.
+
+               ./mvnw -Pcontract test-compile failsafe:integration-test failsafe:verify
+
+             Esta en un perfil aparte, y no en el build por defecto, porque
+             `mvnw verify` es el gate de las pruebas unitarias: la verificacion
+             del contrato depende de que exista el pacto publicado por el
+             consumidor, y no tiene que poder romper ese gate.
+
+             Failsafe (no surefire) porque *IT.java esta excluido de surefire a
+             proposito en todo este repositorio: son pruebas que levantan cosas.
+             ==================================================================== -->
+        <profile>
+            <id>contract</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <configuration>
+                            <includes>
+                                <include>**/*ContractIT.java</include>
+                            </includes>
+                            <!-- El agente de JaCoCo no aporta nada aqui y enturbia
+                                 el reporte de cobertura de las unitarias. -->
+                            <argLine></argLine>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>

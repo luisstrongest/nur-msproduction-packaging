@@ -13,6 +13,10 @@ típico de una IA es el test que nunca podría romperse. En las de integración 
 que **solo comprueba que la aplicación está encendida** (`pm.test('200 OK')`) y la colección
 que **solo pasa la primera vez**.
 
+> El tercer piso son las **pruebas de contrato** con Pact
+> ([`pruebas-contrato.md`](pruebas-contrato.md)): aquí se comprueba que BC4 funciona; allí,
+> que BC5 puede consumirlo.
+
 ## 1. Qué añade este nivel
 
 Las 163 pruebas unitarias mockean el repositorio, el bus de eventos y el servicio de
