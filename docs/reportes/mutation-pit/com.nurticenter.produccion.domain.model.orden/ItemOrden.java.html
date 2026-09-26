@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <link rel="stylesheet" type="text/css" href="../style.css">
+</head>
+<body>
+
+
+<h1>ItemOrden.java</h1>
+
+<table class="src">
+
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_1'/>
+1
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_1'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>package com.nurticenter.produccion.domain.model.orden;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_2'/>
+2
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_2'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_3'/>
+3
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_3'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import com.nurticenter.produccion.domain.shared.Porcion;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_4'/>
+4
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_4'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_5'/>
+5
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_5'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.Objects;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_6'/>
+6
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_6'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_7'/>
+7
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_7'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>/**</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_8'/>
+8
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_8'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * VALUE OBJECT - ItemOrden</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_9'/>
+9
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_9'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_10'/>
+10
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_10'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * Representa una receta traducida al lenguaje de produccion mediante la ACL.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_11'/>
+11
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_11'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * No conoce el modelo de Receta de BC2; solo trabaja con RecetaId (String opaco)</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_12'/>
+12
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_12'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * y los datos necesarios para produccion.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_13'/>
+13
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_13'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_14'/>
+14
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_14'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * La cantidad total se calcula en la capa de aplicacion (ACL):</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_15'/>
+15
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_15'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *   cantidadTotal = porcionIndividual x numero de pacientes con esa receta ese dia.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_16'/>
+16
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_16'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> */</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_17'/>
+17
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_17'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>public final class ItemOrden {</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_18'/>
+18
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_18'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_19'/>
+19
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_19'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    private final String recetaId;          // ref. opaca a BC2 - nunca un objeto Receta</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_20'/>
+20
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_20'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    private final String nombreReceta;      // desnormalizado para no consultar BC2</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_21'/>
+21
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_21'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    private final int cantidadTotal;        // total a preparar (ya calculado por ACL)</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_22'/>
+22
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_22'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    private final Porcion porcionIndividual;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_23'/>
+23
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_23'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    private EstadoItem estado;              // mutable: avanza de PENDIENTE -&#62; PREPARADO</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_24'/>
+24
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_24'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_25'/>
+25
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_25'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    public ItemOrden(String recetaId, String nombreReceta, int cantidadTotal, Porcion porcionIndividual) {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_26'/>
+26
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_26'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        Objects.requireNonNull(recetaId,           &#34;recetaId es obligatorio.&#34;);</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_27'/>
+27
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_27'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        Objects.requireNonNull(nombreReceta,        &#34;nombreReceta es obligatorio.&#34;);</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_28'/>
+28
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_28'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        Objects.requireNonNull(porcionIndividual,   &#34;porcionIndividual es obligatoria.&#34;);</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_29'/>
+29
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_29'>2</a>
+<span>
+
+1. &#60;init&#62; : changed conditional boundary &rarr; KILLED<br/>
+
+2. &#60;init&#62; : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        if (cantidadTotal &#60;= 0)</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_30'/>
+30
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_30'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            throw new IllegalArgumentException(&#34;cantidadTotal debe ser mayor a cero.&#34;);</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_31'/>
+31
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_31'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_32'/>
+32
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_32'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        this.recetaId           = recetaId;</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_33'/>
+33
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_33'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        this.nombreReceta       = nombreReceta;</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_34'/>
+34
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_34'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        this.cantidadTotal      = cantidadTotal;</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_35'/>
+35
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_35'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        this.porcionIndividual  = porcionIndividual;</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_36'/>
+36
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_36'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        this.estado             = EstadoItem.PENDIENTE;</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_37'/>
+37
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_37'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_38'/>
+38
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_38'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_39'/>
+39
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_39'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    /**</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_40'/>
+40
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_40'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * Reconstruye un ItemOrden desde persistencia, preservando su estado.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_41'/>
+41
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_41'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * Uso exclusivo de los adaptadores de infraestructura.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_42'/>
+42
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_42'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     */</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_43'/>
+43
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_43'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    public static ItemOrden reconstituir(String recetaId, String nombreReceta, int cantidadTotal,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_44'/>
+44
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_44'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>                                         Porcion porcionIndividual, EstadoItem estado) {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_45'/>
+45
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_45'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        ItemOrden item = new ItemOrden(recetaId, nombreReceta, cantidadTotal, porcionIndividual);</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_46'/>
+46
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_46'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        item.estado = Objects.requireNonNull(estado, &#34;estado es obligatorio.&#34;);</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_47'/>
+47
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_47'>1</a>
+<span>
+
+1. reconstituir : replaced return value with null for com/nurticenter/produccion/domain/model/orden/ItemOrden::reconstituir &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        return item;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_48'/>
+48
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_48'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_49'/>
+49
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_49'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_50'/>
+50
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_50'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    /** Avanza el item a estado PREPARADO. Solo puede llamarse una vez. */</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_51'/>
+51
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_51'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    public void marcarPreparado() {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_52'/>
+52
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_52'>1</a>
+<span>
+
+1. marcarPreparado : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        if (this.estado == EstadoItem.PREPARADO) {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_53'/>
+53
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_53'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            throw new IllegalStateException(&#34;El item ya esta marcado como PREPARADO: &#34; + recetaId);</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_54'/>
+54
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_54'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        }</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_55'/>
+55
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_55'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        this.estado = EstadoItem.PREPARADO;</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_56'/>
+56
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_56'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_57'/>
+57
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_57'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_58'/>
+58
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_58'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    // -- Consultas --------------------------------------------------------------</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_59'/>
+59
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_59'>1</a>
+<span>
+
+1. recetaId : replaced return value with &#34;&#34; for com/nurticenter/produccion/domain/model/orden/ItemOrden::recetaId &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    public String recetaId()                { return recetaId; }</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_60'/>
+60
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_60'>1</a>
+<span>
+
+1. nombreReceta : replaced return value with &#34;&#34; for com/nurticenter/produccion/domain/model/orden/ItemOrden::nombreReceta &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    public String nombreReceta()            { return nombreReceta; }</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_61'/>
+61
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_61'>1</a>
+<span>
+
+1. cantidadTotal : replaced int return with 0 for com/nurticenter/produccion/domain/model/orden/ItemOrden::cantidadTotal &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    public int cantidadTotal()              { return cantidadTotal; }</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_62'/>
+62
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_62'>1</a>
+<span>
+
+1. porcionIndividual : replaced return value with null for com/nurticenter/produccion/domain/model/orden/ItemOrden::porcionIndividual &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    public Porcion porcionIndividual()      { return porcionIndividual; }</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_63'/>
+63
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_63'>1</a>
+<span>
+
+1. estado : replaced return value with null for com/nurticenter/produccion/domain/model/orden/ItemOrden::estado &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>    public EstadoItem estado()              { return estado; }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_64'/>
+64
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_64'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_65'/>
+65
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_65'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    @Override</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_66'/>
+66
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_66'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    public boolean equals(Object o) {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_67'/>
+67
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_67'>2</a>
+<span>
+
+1. equals : negated conditional &rarr; KILLED<br/>
+
+2. equals : replaced boolean return with false for com/nurticenter/produccion/domain/model/orden/ItemOrden::equals &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        if (this == o) return true;</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_68'/>
+68
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_68'>2</a>
+<span>
+
+1. equals : replaced boolean return with true for com/nurticenter/produccion/domain/model/orden/ItemOrden::equals &rarr; KILLED<br/>
+
+2. equals : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        if (!(o instanceof ItemOrden other)) return false;</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_69'/>
+69
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_69'>2</a>
+<span>
+
+1. equals : replaced boolean return with false for com/nurticenter/produccion/domain/model/orden/ItemOrden::equals &rarr; KILLED<br/>
+
+2. equals : replaced boolean return with true for com/nurticenter/produccion/domain/model/orden/ItemOrden::equals &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        return recetaId.equals(other.recetaId);  // identidad por recetaId dentro de la orden</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_70'/>
+70
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_70'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_71'/>
+71
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_71'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_72'/>
+72
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_72'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    @Override</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_73'/>
+73
+</td>
+<td class='survived'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_73'>1</a>
+<span>
+
+1. hashCode : replaced int return with 0 for com/nurticenter/produccion/domain/model/orden/ItemOrden::hashCode &rarr; SURVIVED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='survived'>    public int hashCode() { return Objects.hash(recetaId); }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@5b88af70_74'/>
+74
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_74'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>}</span></pre></td></tr>
+
+
+
+<tr><td></td><td></td><td><h2>Mutations</h2></td></tr>
+
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@5b88af70_29'>29</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_29'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>&#60;init&#62;<br/><b>Killed by : </b>com.nurticenter.produccion.domain.model.orden.ItemOrdenTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.ItemOrdenTest]/[test-template:rechazaCantidadTotalNoPositiva(int)]/[test-template-invocation:#1]</span></span> changed conditional boundary &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>&#60;init&#62;<br/><b>Killed by : </b>com.nurticenter.produccion.domain.model.orden.ItemOrdenTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.ItemOrdenTest]/[method:marcarPreparadoAvanzaElEstado()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@5b88af70_47'>47</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_47'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>reconstituir<br/><b>Killed by : </b>com.nurticenter.produccion.domain.model.orden.ItemOrdenTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.ItemOrdenTest]/[method:reconstituirPreservaEstado()]</span></span> replaced return value with null for com/nurticenter/produccion/domain/model/orden/ItemOrden::reconstituir &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@5b88af70_52'>52</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_52'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>marcarPreparado<br/><b>Killed by : </b>com.nurticenter.produccion.domain.model.orden.ItemOrdenTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.ItemOrdenTest]/[method:marcarPreparadoAvanzaElEstado()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@5b88af70_59'>59</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_59'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>recetaId<br/><b>Killed by : </b>com.nurticenter.produccion.domain.model.orden.ItemOrdenTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.ItemOrdenTest]/[method:seCreaEnEstadoPendiente()]</span></span> replaced return value with &#34;&#34; for com/nurticenter/produccion/domain/model/orden/ItemOrden::recetaId &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@5b88af70_60'>60</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_60'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>nombreReceta<br/><b>Killed by : </b>com.nurticenter.produccion.domain.model.orden.ItemOrdenTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.ItemOrdenTest]/[method:seCreaEnEstadoPendiente()]</span></span> replaced return value with &#34;&#34; for com/nurticenter/produccion/domain/model/orden/ItemOrden::nombreReceta &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@5b88af70_61'>61</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_61'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>cantidadTotal<br/><b>Killed by : </b>com.nurticenter.produccion.domain.model.orden.ItemOrdenTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.ItemOrdenTest]/[method:seCreaEnEstadoPendiente()]</span></span> replaced int return with 0 for com/nurticenter/produccion/domain/model/orden/ItemOrden::cantidadTotal &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@5b88af70_62'>62</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_62'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>porcionIndividual<br/><b>Killed by : </b>com.nurticenter.produccion.domain.model.orden.ItemOrdenTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.ItemOrdenTest]/[method:seCreaEnEstadoPendiente()]</span></span> replaced return value with null for com/nurticenter/produccion/domain/model/orden/ItemOrden::porcionIndividual &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@5b88af70_63'>63</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_63'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>estado<br/><b>Killed by : </b>com.nurticenter.produccion.domain.model.orden.ItemOrdenTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.ItemOrdenTest]/[method:marcarPreparadoAvanzaElEstado()]</span></span> replaced return value with null for com/nurticenter/produccion/domain/model/orden/ItemOrden::estado &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@5b88af70_67'>67</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_67'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>equals<br/><b>Killed by : </b>com.nurticenter.produccion.domain.model.orden.ItemOrdenTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.ItemOrdenTest]/[method:igualdadPorRecetaId()]</span></span> negated conditional &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>equals<br/><b>Killed by : </b>com.nurticenter.produccion.domain.model.orden.ItemOrdenTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.ItemOrdenTest]/[method:igualdadPorRecetaId()]</span></span> replaced boolean return with false for com/nurticenter/produccion/domain/model/orden/ItemOrden::equals &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@5b88af70_68'>68</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_68'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>equals<br/><b>Killed by : </b>com.nurticenter.produccion.domain.model.orden.ItemOrdenTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.ItemOrdenTest]/[method:igualdadPorRecetaId()]</span></span> replaced boolean return with true for com/nurticenter/produccion/domain/model/orden/ItemOrden::equals &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>equals<br/><b>Killed by : </b>com.nurticenter.produccion.domain.model.orden.ItemOrdenTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.ItemOrdenTest]/[method:igualdadPorRecetaId()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@5b88af70_69'>69</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_69'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>equals<br/><b>Killed by : </b>com.nurticenter.produccion.domain.model.orden.ItemOrdenTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.ItemOrdenTest]/[method:igualdadPorRecetaId()]</span></span> replaced boolean return with false for com/nurticenter/produccion/domain/model/orden/ItemOrden::equals &rarr; KILLED</span>
+</div> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>equals<br/><b>Killed by : </b>com.nurticenter.produccion.domain.model.orden.ItemOrdenTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.ItemOrdenTest]/[method:igualdadPorRecetaId()]</span></span> replaced boolean return with true for com/nurticenter/produccion/domain/model/orden/ItemOrden::equals &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@5b88af70_73'>73</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@5b88af70_73'/> 
+
+<p class='SURVIVED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>hashCode<br/><b>Killed by : </b>none</span></span> replaced int return with 0 for com/nurticenter/produccion/domain/model/orden/ItemOrden::hashCode &rarr; SURVIVED</span>
+<a title="Click to view covering tests" class="view-covered-by-tests" onClick="document.getElementById('MutationIdentifier-[location=Location-[clazz=com.nurticenter.produccion.domain.model.orden.ItemOrden,-method=hashCode,-methodDesc=()I],-indexes=[11],-mutator=org.pitest.mutationtest.engine.gregor.mutators.returns.PrimitiveReturnsMutator]').style.display=(document.getElementById('MutationIdentifier-[location=Location-[clazz=com.nurticenter.produccion.domain.model.orden.ItemOrden,-method=hashCode,-methodDesc=()I],-indexes=[11],-mutator=org.pitest.mutationtest.engine.gregor.mutators.returns.PrimitiveReturnsMutator]').style.display == 'block')?'none':'block';">Covering tests</a>
+<div class="covered-tests" id="MutationIdentifier-[location=Location-[clazz=com.nurticenter.produccion.domain.model.orden.ItemOrden,-method=hashCode,-methodDesc=()I],-indexes=[11],-mutator=org.pitest.mutationtest.engine.gregor.mutators.returns.PrimitiveReturnsMutator]" style="display:none;">Covered by tests:
+<ul>
+<li>com.nurticenter.produccion.domain.model.orden.ItemOrdenTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.ItemOrdenTest]/[method:igualdadPorRecetaId()]</li> 
+</ul>
+</div></div> 
+</td>
+</tr>
+
+</table>
+
+
+<h2>Active mutators</h2>
+<ul>
+
+<li class='mutator'>CONDITIONALS_BOUNDARY</li>
+
+<li class='mutator'>EMPTY_RETURNS</li>
+
+<li class='mutator'>FALSE_RETURNS</li>
+
+<li class='mutator'>INCREMENTS</li>
+
+<li class='mutator'>INVERT_NEGS</li>
+
+<li class='mutator'>MATH</li>
+
+<li class='mutator'>NEGATE_CONDITIONALS</li>
+
+<li class='mutator'>NULL_RETURNS</li>
+
+<li class='mutator'>PRIMITIVE_RETURNS</li>
+
+<li class='mutator'>TRUE_RETURNS</li>
+
+<li class='mutator'>VOID_METHOD_CALLS</li>
+
+</ul>
+
+<h2>Tests examined</h2>
+<ul>
+<li>com.nurticenter.produccion.domain.model.orden.ItemOrdenTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.ItemOrdenTest]/[method:seCreaEnEstadoPendiente()] (8 ms)</li><li>com.nurticenter.produccion.infrastructure.persistence.orden.OrdenPersistenceAdapterTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.persistence.orden.OrdenPersistenceAdapterTest]/[method:guardarMapeaElAgregadoAEntidad()] (4 ms)</li><li>com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest]/[method:iniciarPreparacionDelegaEnElServicio()] (6 ms)</li><li>com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest]/[method:laRespuestaMapeaTodoElAgregado()] (6 ms)</li><li>com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest]/[method:listarPorEstado()] (9 ms)</li><li>com.nurticenter.produccion.infrastructure.persistence.orden.OrdenPersistenceAdapterTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.persistence.orden.OrdenPersistenceAdapterTest]/[method:idaYVueltaSinPerdidaDeDatos()] (8 ms)</li><li>com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest]/[method:listarPorFechaTienePrioridad()] (11 ms)</li><li>com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest]/[method:listarSinFiltrosUsaPendientePorDefecto()] (20 ms)</li><li>com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest]/[method:generarTraduceElRequestYDevuelveLaRespuesta()] (20 ms)</li><li>com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest]/[method:completarDelegaEnElServicio()] (23 ms)</li><li>com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest]/[nested-class:GenerarOrden]/[method:traduceElItemDelCalendario()] (23 ms)</li><li>com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest]/[method:marcarItemPreparadoDelegaEnElServicio()] (84 ms)</li><li>com.nurticenter.produccion.domain.model.orden.ItemOrdenTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.ItemOrdenTest]/[method:igualdadPorRecetaId()] (1 ms)</li><li>com.nurticenter.produccion.domain.model.orden.ItemOrdenTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.ItemOrdenTest]/[method:marcarPreparadoAvanzaElEstado()] (1 ms)</li><li>com.nurticenter.produccion.domain.model.orden.ItemOrdenTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.ItemOrdenTest]/[method:noSePuedeMarcarPreparadoDosVeces()] (3 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:CicloDeVida]/[method:noSePuedeCompletarConItemsPendientes()] (2 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:CicloDeVida]/[method:noSePuedeModificarUnaOrdenCompletada()] (2 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:Reglas]/[method:noSePuedenRegistrarPaquetesEnUnaOrdenCompletada()] (2 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:CicloDeVida]/[method:cicloDeVidaCompletoHastaCompletada()] (1 ms)</li><li>com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest]/[nested-class:Transiciones]/[method:marcarItemPreparadoDelegaEnElDominioYGuarda()] (5 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:CicloDeVida]/[method:ordenCompletadaIncluyeLosPaquetes()] (15 ms)</li><li>com.nurticenter.produccion.application.orden.OrdenApplicationServiceConDoblesEnMemoriaTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.orden.OrdenApplicationServiceConDoblesEnMemoriaTest]/[method:flujoCompletoDeLaOrden()] (19 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:CicloDeVida]/[method:marcarUnItemInexistenteFalla()] (2 ms)</li><li>com.nurticenter.produccion.domain.model.orden.ItemOrdenTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.ItemOrdenTest]/[test-template:rechazaCantidadTotalNoPositiva(int)]/[test-template-invocation:#2] (1 ms)</li><li>com.nurticenter.produccion.domain.model.orden.ItemOrdenTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.ItemOrdenTest]/[method:reconstituirRechazaEstadoNulo()] (1 ms)</li><li>com.nurticenter.produccion.domain.model.orden.ItemOrdenTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.ItemOrdenTest]/[method:reconstituirPreservaEstado()] (1 ms)</li><li>com.nurticenter.produccion.domain.model.orden.ItemOrdenTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.ItemOrdenTest]/[test-template:rechazaCantidadTotalNoPositiva(int)]/[test-template-invocation:#1] (26 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:Creacion]/[method:reconstituirNoEmiteEventos()] (1 ms)</li><li>com.nurticenter.produccion.infrastructure.persistence.orden.OrdenPersistenceAdapterTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.persistence.orden.OrdenPersistenceAdapterTest]/[method:listarPorEstadoMapeaCadaEntidad()] (4 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:Creacion]/[method:pullEventosLimpiaLaBandeja()] (1 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:Creacion]/[method:crearRegistraEventoOrdenGenerada()] (1 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:CicloDeVida]/[method:noSePuedeIniciarLaPreparacionDosVeces()] (2 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:CicloDeVida]/[method:noSePuedeCompletarUnaOrdenPendiente()] (4 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:Reglas]/[method:lasColeccionesExpuestasSonInmutables()] (4 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:Creacion]/[method:elEventoLlevaLosDatosDeLaOrden()] (3 ms)</li><li>com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest]/[nested-class:Consultas]/[method:buscarPorIdDevuelveLaOrdenDelRepositorio()] (6 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:Reglas]/[method:calcularTotalPorcionesSumaTodosLosItems()] (6 ms)</li><li>com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest]/[nested-class:Consultas]/[method:buscarPorFechaDevuelveLaOrdenDelDia()] (8 ms)</li><li>com.nurticenter.produccion.infrastructure.persistence.orden.OrdenPersistenceAdapterTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.persistence.orden.OrdenPersistenceAdapterTest]/[method:buscarPorFechaMapeaElResultado()] (13 ms)</li><li>com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest]/[nested-class:Transiciones]/[method:iniciarPreparacionDelegaEnElDominioYGuarda()] (9 ms)</li><li>com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest]/[nested-class:GenerarOrden]/[method:normalizaLaUnidadDeMedida()] (7 ms)</li><li>com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest]/[nested-class:GenerarOrden]/[method:guardaYPublica()] (6 ms)</li><li>com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest]/[nested-class:Transiciones]/[method:completarPublicaElEvento()] (9 ms)</li><li>com.nurticenter.produccion.application.orden.OrdenApplicationServiceConDoblesEnMemoriaTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.orden.OrdenApplicationServiceConDoblesEnMemoriaTest]/[method:noSePuedeDuplicarLaOrdenDelDia()] (8 ms)</li><li>com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest]/[nested-class:Transiciones]/[method:unaViolacionDeInvarianteAbortaLaTransaccion()] (19 ms)</li><li>com.nurticenter.produccion.application.paquete.PaqueteApplicationServiceTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.paquete.PaqueteApplicationServiceTest]/[nested-class:CrearPaquete]/[method:creaElPaqueteYLoVinculaALaOrden()] (20 ms)</li><li>com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest]/[nested-class:Consultas]/[method:listarPorEstadoDelegaEnElRepositorio()] (42 ms)</li><li>com.nurticenter.produccion.infrastructure.persistence.orden.OrdenPersistenceAdapterTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.persistence.orden.OrdenPersistenceAdapterTest]/[method:buscarPorIdReconstituyeElAgregado()] (236 ms)</li><li>com.nurticenter.produccion.application.orden.OrdenApplicationServiceConDoblesEnMemoriaTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.orden.OrdenApplicationServiceConDoblesEnMemoriaTest]/[method:elEstadoPersisteEntreCasosDeUso()] (404 ms)</li>
+</ul>
+
+<br/>
+
+Report generated by <a href='https://pitest.org'>PIT</a> 1.30.0 <a href='https://github.com/sponsors/hcoles'>support</a>
+
+</body>
+</html>

@@ -116,7 +116,7 @@
                  Surefire: ejecuta SOLO los tests unitarios.
                  Las clases *IT.java (integration tests, que levantan el contexto
                  de Spring y/o una BD) quedan fuera de `mvn test` a proposito:
-                 en esta etapa del proyecto solo se entregan pruebas unitarias.
+                 las ejecuta failsafe en los perfiles 'integration' y 'contract'.
                  ================================================================ -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -248,6 +248,49 @@
 
     <profiles>
         <!-- ====================================================================
+             Perfil 'integration': pruebas de integracion en Java, una clase por
+             flujo de negocio (FlujoProduccionIT, FlujoEnvasadoIT).
+
+               ./mvnw -Pintegration verify
+
+             Levantan el contexto completo de Spring con el perfil 'it' (H2 en
+             memoria) y recorren la API por HTTP hasta la base de datos. Van en un
+             perfil aparte para que `mvnw verify` siga siendo el gate rapido de las
+             unitarias. Son el complemento en el lenguaje del proyecto de la
+             coleccion Postman (postman/bc4-integracion.postman_collection.json).
+             ==================================================================== -->
+        <profile>
+            <id>integration</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <configuration>
+                            <includes>
+                                <include>**/integration/*IT.java</include>
+                            </includes>
+                            <!-- Sin el agente de JaCoCo: el coverage que se reporta
+                                 es el de las unitarias, no el de estos flujos.
+                                 El valor NO puede ir vacio: Maven trata <argLine></argLine>
+                                 como "sin configurar", vuelve a ${argLine} (el agente que
+                                 inyecta jacoco:prepare-agent) y los ITs inflan jacoco.exec. -->
+                            <argLine>-Dfile.encoding=UTF-8</argLine>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- ====================================================================
              Perfil 'contract': verificacion del contrato Pact.
 
                ./mvnw -Pcontract test-compile failsafe:integration-test failsafe:verify
@@ -272,8 +315,9 @@
                                 <include>**/*ContractIT.java</include>
                             </includes>
                             <!-- El agente de JaCoCo no aporta nada aqui y enturbia
-                                 el reporte de cobertura de las unitarias. -->
-                            <argLine></argLine>
+                                 el reporte de cobertura de las unitarias. No vacio: ver
+                                 el mismo comentario en el perfil 'integration'. -->
+                            <argLine>-Dfile.encoding=UTF-8</argLine>
                         </configuration>
                         <executions>
                             <execution>

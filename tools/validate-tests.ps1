@@ -166,12 +166,22 @@ if (-not $Mutation) {
     Write-Host "  no solo que lineas tocan."
 } else {
     Write-Host "  Ejecutando PIT (esto tarda varios minutos)..."
-    $pitLog = & .\mvnw.cmd -B -Djacoco.skip=true test-compile org.pitest:pitest-maven:mutationCoverage 2>&1
+    # Comillas obligatorias: sin ellas Windows PowerShell 5.1 parte el argumento en
+    # "-Djacoco" y ".skip=true", y Maven falla con "Unknown lifecycle phase".
+    $pitLog = & .\mvnw.cmd -B "-Djacoco.skip=true" test-compile org.pitest:pitest-maven:mutationCoverage 2>&1
     $pitExit = $LASTEXITCODE
 
     $stats = $pitLog | Select-String -Pattern "Generated \d+ mutations|mutations? with|Mutation Coverage"
     if ($stats) { $stats | ForEach-Object { Write-Host "  $($_.ToString().Trim())" } }
 
+    if ($pitExit -ne 0 -and -not $stats) {
+        # PIT ni siquiera llego a mutar: es un error de build, no de calidad de los tests.
+        Write-Host ""
+        Write-Host "FALLO: PIT no se pudo ejecutar. Salida de Maven:" -ForegroundColor Red
+        $pitLog | Select-String -Pattern "ERROR" | Select-Object -First 10 |
+            ForEach-Object { Write-Host "  $($_.ToString().Trim())" }
+        exit 1
+    }
     if ($pitExit -ne 0) {
         Write-Host ""
         Write-Host "FALLO: demasiados mutantes sobrevivieron (umbral en pom.xml)." -ForegroundColor Red

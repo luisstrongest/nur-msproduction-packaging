@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Etiqueta.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ms-production-packaging</a> &gt; <a href="index.source.html" class="el_package">com.nurticenter.produccion.domain.model.paquete</a> &gt; <span class="el_source">Etiqueta.java</span></div><h1>Etiqueta.java</h1><pre class="source lang-java linenums">package com.nurticenter.produccion.domain.model.paquete;
+
+import java.time.LocalDateTime;
+import java.util.Objects;
+
+/**
+ * VALUE OBJECT - Etiqueta
+ *
+ * Representa los datos impresos en el paquete fisico.
+ * Es completamente inmutable: una vez generada, no cambia.
+ *
+ * Si hay un error (nombre incorrecto, direccion equivocada), el flujo correcto es:
+ *   1. Anular el PaqueteEtiquetado actual.
+ *   2. Crear uno nuevo con los datos correctos.
+ * Nunca se modifica la Etiqueta existente.
+ */
+public final class Etiqueta {
+
+    private final String nombrePaciente;
+    private final DireccionImpresa direccion;
+    private final CodigoIdentificacion codigo;
+    private final LocalDateTime fechaGeneracion;
+
+    private Etiqueta(String nombrePaciente,
+                     DireccionImpresa direccion,
+                     CodigoIdentificacion codigo,
+<span class="fc" id="L27">                     LocalDateTime fechaGeneracion) {</span>
+<span class="fc" id="L28">        this.nombrePaciente  = nombrePaciente;</span>
+<span class="fc" id="L29">        this.direccion       = direccion;</span>
+<span class="fc" id="L30">        this.codigo          = codigo;</span>
+<span class="fc" id="L31">        this.fechaGeneracion = fechaGeneracion;</span>
+<span class="fc" id="L32">    }</span>
+
+    /**
+     * Factory: crea una Etiqueta con timestamp actual.
+     */
+    public static Etiqueta crear(String nombrePaciente,
+                                 DireccionImpresa direccion,
+                                 CodigoIdentificacion codigo) {
+<span class="fc" id="L40">        Objects.requireNonNull(nombrePaciente, &quot;El nombre del paciente es obligatorio.&quot;);</span>
+<span class="fc" id="L41">        Objects.requireNonNull(direccion,      &quot;La direccion impresa es obligatoria.&quot;);</span>
+<span class="fc" id="L42">        Objects.requireNonNull(codigo,         &quot;El codigo de identificacion es obligatorio.&quot;);</span>
+<span class="fc bfc" id="L43" title="All 2 branches covered.">        if (nombrePaciente.isBlank())</span>
+<span class="fc" id="L44">            throw new IllegalArgumentException(&quot;El nombre del paciente no puede estar vacio.&quot;);</span>
+
+<span class="fc" id="L46">        return new Etiqueta(nombrePaciente, direccion, codigo, LocalDateTime.now());</span>
+    }
+
+    /**
+     * Reconstruye una Etiqueta desde persistencia, preservando su fecha de generacion original.
+     * Uso exclusivo de los adaptadores de infraestructura.
+     */
+    public static Etiqueta reconstituir(String nombrePaciente,
+                                        DireccionImpresa direccion,
+                                        CodigoIdentificacion codigo,
+                                        LocalDateTime fechaGeneracion) {
+<span class="fc" id="L57">        return new Etiqueta(nombrePaciente, direccion, codigo, fechaGeneracion);</span>
+    }
+
+    /**
+     * Valida que la etiqueta tiene todos sus componentes correctos.
+     * Usado como condicion de salida antes de marcar el paquete como LISTO.
+     */
+    public boolean esValida() {
+<span class="fc bfc" id="L65" title="All 6 branches covered.">        return nombrePaciente != null &amp;&amp; !nombrePaciente.isBlank()</span>
+<span class="fc bfc" id="L66" title="All 4 branches covered.">                &amp;&amp; direccion != null &amp;&amp; direccion.estaCompleta()</span>
+                &amp;&amp; codigo != null;
+    }
+
+    // -- Consultas -------------------------------------------------------------
+<span class="fc" id="L71">    public String nombrePaciente()          { return nombrePaciente; }</span>
+<span class="fc" id="L72">    public DireccionImpresa direccion()     { return direccion; }</span>
+<span class="fc" id="L73">    public CodigoIdentificacion codigo()    { return codigo; }</span>
+<span class="fc" id="L74">    public LocalDateTime fechaGeneracion()  { return fechaGeneracion; }</span>
+
+    @Override
+    public boolean equals(Object o) {
+<span class="fc bfc" id="L78" title="All 2 branches covered.">        if (this == o) return true;</span>
+<span class="fc bfc" id="L79" title="All 2 branches covered.">        if (!(o instanceof Etiqueta e)) return false;</span>
+<span class="fc" id="L80">        return Objects.equals(codigo, e.codigo);  // el codigo es unico por paquete</span>
+    }
+
+    @Override
+<span class="fc" id="L84">    public int hashCode() { return Objects.hash(codigo); }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

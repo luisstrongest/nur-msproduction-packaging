@@ -32,6 +32,11 @@
     dos vueltas pasen. Es la comprobacion de repetibilidad: una coleccion que solo pasa
     con la base recien creada no es una prueba, es una demo.
 
+.PARAMETER Report
+    Ademas del JSON, genera el reporte HTML navegable (newman-reporter-htmlextra) en
+    docs/reportes/integracion-postman/index.html, que es el que se entrega. Fuerza el uso
+    de npx para cargar el reporter sin instalarlo globalmente.
+
 .PARAMETER BaseUrl
     URL del microservicio. Por defecto http://localhost:8082.
 
@@ -39,6 +44,7 @@
     .\tools\validate-integration.ps1
     .\tools\validate-integration.ps1 -Mode local
     .\tools\validate-integration.ps1 -KeepUp
+    .\tools\validate-integration.ps1 -Mode local -Twice -Report
 
 .OUTPUTS
     exit 0 = OK | 1 = aserciones fallidas | 2 = el ambiente no levanto
@@ -50,6 +56,7 @@ param(
     [string] $Mode = "docker",
     [switch] $KeepUp,
     [switch] $Twice,
+    [switch] $Report,
     [string] $BaseUrl = "http://localhost:8082",
     [string] $Module = "ms-production-packaging",
     [string] $NpmRegistry = "https://registry.npmjs.org"
@@ -67,6 +74,7 @@ $coleccion   = Join-Path $repoRoot "postman\bc4-integracion.postman_collection.j
 $entorno     = Join-Path $repoRoot "postman\local.postman_environment.json"
 $reporteDir  = Join-Path $moduleDir "target\newman"
 $reporteJson = Join-Path $reporteDir "report.json"
+$reporteHtml = Join-Path $repoRoot "docs\reportes\integracion-postman\index.html"
 
 $appProcess = $null
 
@@ -105,7 +113,10 @@ function Stop-Ambiente {
     }
     elseif ($Mode -eq "local" -and $null -ne $appProcess -and -not $appProcess.HasExited) {
         Write-Host "  Parando la aplicacion (PID $($appProcess.Id))..."
-        Stop-Process -Id $appProcess.Id -Force -ErrorAction SilentlyContinue
+        # /T mata el arbol: el 'java' del PATH suele ser el shim de Oracle
+        # (javapath\java.exe), que lanza la JVM real como proceso hijo. Con
+        # Stop-Process solo moriria el shim y la app seguiria ocupando el puerto.
+        & taskkill /PID $appProcess.Id /T /F 2>&1 | Out-Null
     }
 }
 
@@ -122,7 +133,12 @@ if (-not (Test-Path $coleccion)) {
 # Newman: se prefiere la instalacion global; si no esta, se usa npx (necesita Node).
 $newmanExe  = $null
 $newmanArgs = @()
-if (Test-Comando "newman") {
+if ($Report -and (Test-Comando "npx")) {
+    # El reporter HTML no viene con Newman: npx carga los dos paquetes juntos.
+    $newmanExe  = "npx.cmd"
+    $newmanArgs = @("--yes", "--registry=$NpmRegistry", "-p", "newman", "-p", "newman-reporter-htmlextra", "newman")
+}
+elseif (Test-Comando "newman") {
     $newmanExe = "newman"
 }
 elseif (Test-Comando "npx") {
@@ -272,6 +288,15 @@ for ($v = 1; $v -le $vueltas; $v++) {
         "--reporter-json-export", $reporteVuelta,
         "--color", "off"
     )
+    # El HTML sale de la ultima vuelta: con -Twice es la que demuestra la repetibilidad.
+    if ($Report -and $v -eq $vueltas) {
+        $argsNewman[$argsNewman.IndexOf("cli,json")] = "cli,json,htmlextra"
+        $argsNewman += @(
+            "--reporter-htmlextra-export", $reporteHtml,
+            "--reporter-htmlextra-title", "BC4 - Pruebas de integracion por flujo",
+            "--reporter-htmlextra-browserTitle", "BC4 integracion"
+        )
+    }
 
     & $newmanExe @argsNewman
     if ($LASTEXITCODE -ne 0) { $newmanExit = $LASTEXITCODE }
@@ -312,6 +337,9 @@ foreach ($r in $resumenes) {
         }
     }
     Write-Host "  Reporte    : $Module\target\newman\$($r.Archivo)"
+}
+if ($Report -and (Test-Path $reporteHtml)) {
+    Write-Host "  HTML       : docs\reportes\integracion-postman\index.html"
 }
 
 if ($Twice -and $resumenes.Count -eq 2 -and

@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrdenDeProduccion.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ms-production-packaging</a> &gt; <a href="index.source.html" class="el_package">com.nurticenter.produccion.domain.model.orden</a> &gt; <span class="el_source">OrdenDeProduccion.java</span></div><h1>OrdenDeProduccion.java</h1><pre class="source lang-java linenums">package com.nurticenter.produccion.domain.model.orden;
+
+import com.nurticenter.produccion.domain.event.OrdenCompletada;
+import com.nurticenter.produccion.domain.event.OrdenGenerada;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+/**
+ * AGREGADO RAIZ - OrdenDeProduccion
+ *
+ * Controla el ciclo de vida completo de la orden de cocina:
+ * PENDIENTE -&gt; EN_PREPARACION -&gt; COMPLETADA
+ *
+ * Principio SRP: solo gestiona la orden. No sabe nada de paquetes, rutas ni recetas originales.
+ * Principio OCP: los eventos emitidos son extensibles sin modificar este agregado.
+ */
+public class OrdenDeProduccion {
+
+    // -- Identity -----------------------------------------------------------------
+    private final OrdenId id;
+
+    // -- Atributos ------------------------------------------------------------------
+    private final LocalDate fechaProduccion;
+    private EstadoOrden estado;
+    private final List&lt;ItemOrden&gt; items;
+    private final List&lt;String&gt; paqueteIdsGenerados; // referencias a PaqueteEtiquetado (solo Id)
+
+    // -- Eventos pendientes de publicacion (patron outbox) -------------------------
+    private final List&lt;Object&gt; eventos;
+
+    // -- Constructor privado - solo Factory Method ----------------------------------
+<span class="fc" id="L36">    private OrdenDeProduccion(OrdenId id, LocalDate fechaProduccion, List&lt;ItemOrden&gt; items) {</span>
+<span class="fc bfc" id="L37" title="All 4 branches covered.">        if (items == null || items.isEmpty()) {</span>
+<span class="fc" id="L38">            throw new OrdenSinItemsException(&quot;Una OrdenDeProduccion debe tener al menos un ItemOrden.&quot;);</span>
+        }
+<span class="fc" id="L40">        this.id               = id;</span>
+<span class="fc" id="L41">        this.fechaProduccion  = fechaProduccion;</span>
+<span class="fc" id="L42">        this.estado           = EstadoOrden.PENDIENTE;</span>
+<span class="fc" id="L43">        this.items            = new ArrayList&lt;&gt;(items);</span>
+<span class="fc" id="L44">        this.paqueteIdsGenerados = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L45">        this.eventos          = new ArrayList&lt;&gt;();</span>
+
+        // Registra el evento de creacion
+<span class="fc" id="L48">        this.eventos.add(new OrdenGenerada(</span>
+<span class="fc" id="L49">                this.id.valor(),</span>
+                this.fechaProduccion,
+<span class="fc" id="L51">                this.items.size(),</span>
+<span class="fc" id="L52">                LocalDateTime.now()</span>
+        ));
+<span class="fc" id="L54">    }</span>
+
+    // -- Factory Method (DIP: el dominio no usa new con parametros externos) -------
+    /**
+     * Crea una nueva OrdenDeProduccion a partir del CalendarioConsolidado.
+     * Es el unico punto de creacion valido.
+     *
+     * @param fechaProduccion Fecha para la cual se produce
+     * @param items           Lista de items calculados por la ACL (Receta -&gt; ItemOrden)
+     * @return OrdenDeProduccion en estado PENDIENTE con OrdenGenerada registrado
+     */
+    public static OrdenDeProduccion crear(LocalDate fechaProduccion, List&lt;ItemOrden&gt; items) {
+<span class="fc" id="L66">        OrdenId id = OrdenId.nuevo();</span>
+<span class="fc" id="L67">        return new OrdenDeProduccion(id, fechaProduccion, items);</span>
+    }
+
+    // -- Constructor de reconstitucion (para la capa de infraestructura) -----------
+    private OrdenDeProduccion(OrdenId id, LocalDate fechaProduccion, EstadoOrden estado,
+<span class="fc" id="L72">                              List&lt;ItemOrden&gt; items, List&lt;String&gt; paqueteIds) {</span>
+<span class="fc" id="L73">        this.id                  = id;</span>
+<span class="fc" id="L74">        this.fechaProduccion     = fechaProduccion;</span>
+<span class="fc" id="L75">        this.estado              = estado;</span>
+<span class="fc" id="L76">        this.items               = new ArrayList&lt;&gt;(items);</span>
+<span class="fc" id="L77">        this.paqueteIdsGenerados = new ArrayList&lt;&gt;(paqueteIds);</span>
+<span class="fc" id="L78">        this.eventos             = new ArrayList&lt;&gt;();</span>
+        // No se registra OrdenGenerada: la orden ya existia; solo se rehidrata desde la BD.
+<span class="fc" id="L80">    }</span>
+
+    /**
+     * Reconstruye una OrdenDeProduccion desde el almacenamiento persistente.
+     * NO emite eventos: representa un estado ya existente, no un hecho nuevo.
+     * Uso exclusivo de los adaptadores de persistencia (infraestructura).
+     */
+    public static OrdenDeProduccion reconstituir(OrdenId id, LocalDate fechaProduccion,
+                                                 EstadoOrden estado, List&lt;ItemOrden&gt; items,
+                                                 List&lt;String&gt; paqueteIds) {
+<span class="fc" id="L90">        return new OrdenDeProduccion(id, fechaProduccion, estado, items, paqueteIds);</span>
+    }
+
+    // -- Comportamiento de dominio ---------------------------------------------------
+
+    /**
+     * Inicia la preparacion de la orden.
+     * Transicion: PENDIENTE -&gt; EN_PREPARACION
+     */
+    public void iniciarPreparacion() {
+<span class="fc bfc" id="L100" title="All 2 branches covered.">        if (this.estado != EstadoOrden.PENDIENTE) {</span>
+<span class="fc" id="L101">            throw new TransicionEstadoInvalidaException(</span>
+                    &quot;Solo se puede iniciar la preparacion desde estado PENDIENTE. Estado actual: &quot; + this.estado
+            );
+        }
+<span class="fc" id="L105">        this.estado = EstadoOrden.EN_PREPARACION;</span>
+<span class="fc" id="L106">    }</span>
+
+    /**
+     * Marca un item especifico como preparado.
+     * El item se identifica por su RecetaId (String opaco).
+     *
+     * @param recetaId Identificador de la receta en BC2 (referencia externa)
+     */
+    public void marcarItemPreparado(String recetaId) {
+<span class="fc bfc" id="L115" title="All 2 branches covered.">        if (this.estado == EstadoOrden.COMPLETADA) {</span>
+<span class="fc" id="L116">            throw new OrdenYaCompletadaException(&quot;No se puede modificar una orden ya completada.&quot;);</span>
+        }
+<span class="fc" id="L118">        ItemOrden item = buscarItem(recetaId);</span>
+<span class="fc" id="L119">        item.marcarPreparado();</span>
+<span class="fc" id="L120">    }</span>
+
+    /**
+     * Registra la referencia a un PaqueteEtiquetado generado.
+     * BC4 no instancia PaqueteEtiquetado; solo guarda su Id como referencia.
+     *
+     * @param paqueteId Id del paquete generado (String del PaqueteId)
+     */
+    public void registrarPaqueteGenerado(String paqueteId) {
+<span class="fc bfc" id="L129" title="All 2 branches covered.">        if (this.estado == EstadoOrden.COMPLETADA) {</span>
+<span class="fc" id="L130">            throw new OrdenYaCompletadaException(&quot;No se pueden registrar paquetes en una orden completada.&quot;);</span>
+        }
+<span class="fc" id="L132">        this.paqueteIdsGenerados.add(paqueteId);</span>
+<span class="fc" id="L133">    }</span>
+
+    /**
+     * Completa la orden.
+     * Transicion: EN_PREPARACION -&gt; COMPLETADA
+     *
+     * Invariante: todos los items deben estar en estado PREPARADO.
+     */
+    public void completar() {
+<span class="fc bfc" id="L142" title="All 2 branches covered.">        if (this.estado != EstadoOrden.EN_PREPARACION) {</span>
+<span class="fc" id="L143">            throw new TransicionEstadoInvalidaException(</span>
+                    &quot;Solo se puede completar una orden EN_PREPARACION. Estado actual: &quot; + this.estado
+            );
+        }
+<span class="fc" id="L147">        boolean hayItemsPendientes = this.items.stream()</span>
+<span class="fc bfc" id="L148" title="All 2 branches covered.">                .anyMatch(item -&gt; item.estado() == EstadoItem.PENDIENTE);</span>
+<span class="fc bfc" id="L149" title="All 2 branches covered.">        if (hayItemsPendientes) {</span>
+<span class="fc" id="L150">            throw new ItemsPendientesException(&quot;No se puede completar la orden: hay items sin preparar.&quot;);</span>
+        }
+<span class="fc" id="L152">        this.estado = EstadoOrden.COMPLETADA;</span>
+<span class="fc" id="L153">        this.eventos.add(new OrdenCompletada(</span>
+<span class="fc" id="L154">                this.id.valor(),</span>
+<span class="fc" id="L155">                List.copyOf(this.paqueteIdsGenerados),</span>
+<span class="fc" id="L156">                LocalDateTime.now()</span>
+        ));
+<span class="fc" id="L158">    }</span>
+
+    /**
+     * Calcula el total de porciones de todos los items de la orden.
+     * Util para estimar el volumen de produccion del dia.
+     */
+    public int calcularTotalPorciones() {
+<span class="fc" id="L165">        return this.items.stream()</span>
+<span class="fc" id="L166">                .mapToInt(ItemOrden::cantidadTotal)</span>
+<span class="fc" id="L167">                .sum();</span>
+    }
+
+    // -- Consultas (getters inmutables) ------------------------------------------------
+
+<span class="fc" id="L172">    public OrdenId id()                      { return id; }</span>
+<span class="fc" id="L173">    public LocalDate fechaProduccion()       { return fechaProduccion; }</span>
+<span class="fc" id="L174">    public EstadoOrden estado()              { return estado; }</span>
+<span class="fc" id="L175">    public List&lt;ItemOrden&gt; items()           { return Collections.unmodifiableList(items); }</span>
+<span class="fc" id="L176">    public List&lt;String&gt; paqueteIds()         { return Collections.unmodifiableList(paqueteIdsGenerados); }</span>
+
+    /**
+     * Retorna y limpia los eventos pendientes de publicacion.
+     * La capa de aplicacion los consume y publica al bus de mensajes.
+     */
+    public List&lt;Object&gt; pullEventos() {
+<span class="fc" id="L183">        List&lt;Object&gt; copia = List.copyOf(this.eventos);</span>
+<span class="fc" id="L184">        this.eventos.clear();</span>
+<span class="fc" id="L185">        return copia;</span>
+    }
+
+    // -- Helpers privados ---------------------------------------------------------------
+
+    private ItemOrden buscarItem(String recetaId) {
+<span class="fc" id="L191">        return this.items.stream()</span>
+<span class="fc" id="L192">                .filter(i -&gt; i.recetaId().equals(recetaId))</span>
+<span class="fc" id="L193">                .findFirst()</span>
+<span class="fc" id="L194">                .orElseThrow(() -&gt; new ItemNoEncontradoException(</span>
+                        &quot;No existe un ItemOrden con RecetaId: &quot; + recetaId
+                ));
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

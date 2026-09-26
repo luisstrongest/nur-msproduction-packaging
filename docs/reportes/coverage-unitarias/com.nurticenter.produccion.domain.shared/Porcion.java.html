@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Porcion.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ms-production-packaging</a> &gt; <a href="index.source.html" class="el_package">com.nurticenter.produccion.domain.shared</a> &gt; <span class="el_source">Porcion.java</span></div><h1>Porcion.java</h1><pre class="source lang-java linenums">package com.nurticenter.produccion.domain.shared;
+
+import java.util.Objects;
+
+/**
+ * VALUE OBJECT - Porcion
+ *
+ * Representa la cantidad de un item para UN paciente, con su unidad de medida.
+ * Encapsula la logica de multiplicacion para calcular el total de produccion.
+ *
+ * Ubicado en domain/shared porque puede ser referenciado
+ * tanto por ItemOrden como por otros contextos internos del dominio.
+ */
+public record Porcion(double cantidad, UnidadMedida unidad, String descripcion) {
+
+<span class="fc" id="L16">    public Porcion {</span>
+<span class="fc bfc" id="L17" title="All 2 branches covered.">        if (cantidad &lt;= 0)</span>
+<span class="fc" id="L18">            throw new IllegalArgumentException(&quot;La cantidad de la porcion debe ser positiva.&quot;);</span>
+<span class="fc" id="L19">        Objects.requireNonNull(unidad,      &quot;La unidad de medida es obligatoria.&quot;);</span>
+<span class="fc" id="L20">        Objects.requireNonNull(descripcion, &quot;La descripcion es obligatoria.&quot;);</span>
+<span class="fc" id="L21">    }</span>
+
+    /**
+     * Calcula la cantidad total para N pacientes.
+     * Usado por la ACL al construir un ItemOrden.
+     *
+     * @param numeroPacientes numero de pacientes que reciben esta receta ese dia
+     * @return nueva Porcion con la cantidad total acumulada
+     */
+    public Porcion multiplicar(int numeroPacientes) {
+<span class="fc bfc" id="L31" title="All 2 branches covered.">        if (numeroPacientes &lt;= 0)</span>
+<span class="fc" id="L32">            throw new IllegalArgumentException(&quot;El numero de pacientes debe ser mayor a cero.&quot;);</span>
+<span class="fc" id="L33">        return new Porcion(this.cantidad * numeroPacientes, this.unidad, this.descripcion);</span>
+    }
+
+    /** Representacion legible para etiquetas e informes internos. */
+    public String formatoCorto() {
+<span class="fc" id="L38">        return String.format(&quot;%.0f %s&quot;, cantidad, unidad.simbolo());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

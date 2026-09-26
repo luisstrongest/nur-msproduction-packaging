@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SpringEventPublisher.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ms-production-packaging</a> &gt; <a href="index.source.html" class="el_package">com.nurticenter.produccion.infrastructure.event</a> &gt; <span class="el_source">SpringEventPublisher.java</span></div><h1>SpringEventPublisher.java</h1><pre class="source lang-java linenums">package com.nurticenter.produccion.infrastructure.event;
+
+import com.nurticenter.produccion.application.event.EventPublisher;
+import com.nurticenter.produccion.domain.event.DomainEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+
+/**
+ * ADAPTADOR DE SALIDA - implementa el puerto EventPublisher.
+ *
+ * Publica los eventos de dominio en el bus interno de Spring
+ * ({@link ApplicationEventPublisher}) y los registra en el log.
+ *
+ * En un despliegue real, aqui se enrutarian a Kafka / RabbitMQ para
+ * que otros bounded contexts (BC5) los consuman.
+ */
+@Component
+public class SpringEventPublisher implements EventPublisher {
+
+<span class="fc" id="L24">    private static final Logger log = LoggerFactory.getLogger(SpringEventPublisher.class);</span>
+
+    private final ApplicationEventPublisher springPublisher;
+
+<span class="fc" id="L28">    public SpringEventPublisher(ApplicationEventPublisher springPublisher) {</span>
+<span class="fc" id="L29">        this.springPublisher = springPublisher;</span>
+<span class="fc" id="L30">    }</span>
+
+    @Override
+    public void publicar(List&lt;Object&gt; eventos) {
+<span class="fc bfc" id="L34" title="All 4 branches covered.">        if (eventos == null || eventos.isEmpty()) {</span>
+<span class="fc" id="L35">            return;</span>
+        }
+<span class="fc bfc" id="L37" title="All 2 branches covered.">        for (Object evento : eventos) {</span>
+<span class="fc bfc" id="L38" title="All 2 branches covered.">            if (evento instanceof DomainEvent de) {</span>
+<span class="fc" id="L39">                log.info(&quot;Publicando evento de dominio [{}] agregado={} occurredAt={}&quot;,</span>
+<span class="fc" id="L40">                        de.nombreEvento(), de.agregadoId(), de.occurredAt());</span>
+            } else {
+<span class="fc" id="L42">                log.info(&quot;Publicando evento [{}]&quot;, evento.getClass().getSimpleName());</span>
+            }
+<span class="fc" id="L44">            springPublisher.publishEvent(evento);</span>
+<span class="fc" id="L45">        }</span>
+<span class="fc" id="L46">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -30,30 +30,41 @@ y que el estado no queda corrupto.
 
 ## 2. Estructura de la coleccion
 
+La coleccion se agrupa por **flujo de negocio**, no por endpoint (requisito del Proyecto
+Final: al menos dos flujos completos, agrupados por flujo):
+
 ```
 BC4 - Pruebas de integracion
-├── 01 - Flujo correcto      -> el ciclo end-to-end, requests encadenados en orden
-└── 02 - Flujo incorrecto    -> rechazos esperados, cada uno con su codigo y su ApiError
+├── 01 - Flujo A: Produccion en cocina       -> orden generada ... orden COMPLETADA
+├── 02 - Flujo B: Envasado, etiquetado y     -> paquete ... LISTO, visible para BC5,
+│        entrega a BC5                          y la orden completada con el paquete
+└── 03 - Flujo C: Rechazos                   -> errores esperados, con su codigo y su ApiError
 ```
 
 Reglas de colocacion:
 
-- Un **caso de error nunca se intercala** en el flujo correcto: rompe el encadenado de los
-  requests que vienen detras.
+- Un **flujo** es un recorrido de negocio que empieza y termina en un estado con sentido
+  para el usuario (orden COMPLETADA, paquete LISTO y entregable). Un escenario nuevo del
+  camino feliz se añade al flujo al que pertenece; si recorre otra parte del dominio, es
+  una carpeta `0N - Flujo X` nueva, con su propio rango de fechas.
+- Un **caso de error nunca se intercala** en un flujo de exito: rompe el encadenado de los
+  requests que vienen detras. Va en `03 - Flujo C: Rechazos`.
 - Cada carpeta es **autocontenida**. Si un escenario de error necesita un estado previo
   (una orden EN_PREPARACION, un paquete sin envasar), la carpeta lo construye con sus
   propios requests `[setup]`. Nunca se depende de que se haya ejecutado la otra carpeta.
 - El nombre del request dice el escenario y, en los errores, el codigo esperado:
-  `2.5 Etiquetar un paquete sin envasar -> 409`. No `POST etiquetar (error)`.
-- Numeracion `N.M` en el nombre para que el orden se lea de un vistazo. El orden real es
-  el del array `item`, no el alfabetico.
+  `C.5 Etiquetar un paquete sin envasar -> 409`. No `POST etiquetar (error)`.
+- Numeracion `<flujo>.<paso>` en el nombre (`A.4`, `B.0a [setup]`, `C.7`) para que el orden
+  se lea de un vistazo. El orden real es el del array `item`, no el alfabetico.
+- Las variables encadenadas llevan el sufijo de su flujo (`ordenAId`, `ordenBId`,
+  `paqueteBId`, `fechaC`): dos flujos nunca comparten una variable de estado.
 
 ## 3. Variables: que va en cada sitio
 
 | Ambito | Que va | Ejemplo |
 | :----- | :----- | :------ |
 | **Environment** (`local.postman_environment.json`) | Lo que cambia de una maquina a otra | `baseUrl` |
-| **Collection variables** | Lo que se encadena durante la corrida | `ordenId`, `paqueteId`, `fechaProduccion` |
+| **Collection variables** | Lo que se encadena durante la corrida | `ordenAId`, `paqueteBId`, `fechaA` (con el sufijo de su flujo) |
 | **Literal en el request** | Datos de prueba fijos que nunca colisionan | `PAC-1001`, `REC-001` |
 
 Nunca metas `baseUrl` en el request. Nunca dejes un id de una corrida anterior escrito en
@@ -72,11 +83,12 @@ se genera en el **pre-request**:
 // Fecha unica por ejecucion: la regla de negocio permite UNA orden por fecha.
 const dias = Math.floor(Math.random() * 4000) + 1;
 const fecha = new Date(Date.now() + dias * 86400000).toISOString().slice(0, 10);
-pm.collectionVariables.set('fechaProduccion', fecha);
+pm.collectionVariables.set('fechaA', fecha);
 ```
 
-Las dos carpetas usan rangos de dias **disjuntos** (`1..4000` y `4001..8000`) para que sus
-escenarios no choquen entre si dentro de la misma corrida.
+Cada flujo usa un rango de dias **disjunto** (A `1..4000`, B `4001..8000`, C `8001..12000`)
+para que sus escenarios no choquen entre si dentro de la misma corrida. Un flujo nuevo toma
+el siguiente rango libre.
 
 Comprobacion obligatoria antes de dar nada por bueno:
 
@@ -122,10 +134,10 @@ Se captura en el bloque `test` del request que crea el recurso:
 
 ```js
 const res = pm.response.json();
-pm.collectionVariables.set('ordenId', res.id);
+pm.collectionVariables.set('ordenAId', res.id);
 ```
 
-Y se consume en la URL del siguiente: `{{baseUrl}}/api/v1/ordenes/{{ordenId}}/completar`.
+Y se consume en la URL del siguiente: `{{baseUrl}}/api/v1/ordenes/{{ordenAId}}/completar`.
 
 Dos restricciones del dominio que condicionan el orden (ver `bc4-api-contract`):
 
@@ -167,7 +179,7 @@ npx --yes --registry=https://registry.npmjs.org newman run \
     -e postman/local.postman_environment.json
 
 # solo una carpeta
-... --folder "02 - Flujo incorrecto"
+... --folder "03 - Flujo C: Rechazos (errores esperados)"
 ```
 
 El `--registry` explicito no es decorativo: si el npm de la maquina apunta a un registro

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ItemOrdenEmbeddable.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ms-production-packaging</a> &gt; <a href="index.source.html" class="el_package">com.nurticenter.produccion.infrastructure.persistence.orden</a> &gt; <span class="el_source">ItemOrdenEmbeddable.java</span></div><h1>ItemOrdenEmbeddable.java</h1><pre class="source lang-java linenums">package com.nurticenter.produccion.infrastructure.persistence.orden;
+
+import com.nurticenter.produccion.domain.model.orden.EstadoItem;
+import com.nurticenter.produccion.domain.shared.UnidadMedida;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+
+/**
+ * Componente embebido - ItemOrden persistido dentro de la tabla de items de la orden.
+ * Aplana el Value Object ItemOrden (incluida su Porcion) a columnas.
+ */
+@Embeddable
+public class ItemOrdenEmbeddable {
+
+    @Column(name = &quot;receta_id&quot;, nullable = false)
+    private String recetaId;
+
+    @Column(name = &quot;nombre_receta&quot;, nullable = false)
+    private String nombreReceta;
+
+    @Column(name = &quot;cantidad_total&quot;, nullable = false)
+    private int cantidadTotal;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = &quot;estado_item&quot;, nullable = false)
+    private EstadoItem estado;
+
+    // -- Porcion (aplanada) --
+    @Column(name = &quot;porcion_cantidad&quot;, nullable = false)
+    private double porcionCantidad;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = &quot;porcion_unidad&quot;, nullable = false)
+    private UnidadMedida porcionUnidad;
+
+    @Column(name = &quot;porcion_descripcion&quot;, nullable = false)
+    private String porcionDescripcion;
+
+<span class="nc" id="L41">    protected ItemOrdenEmbeddable() {</span>
+        // requerido por JPA
+<span class="nc" id="L43">    }</span>
+
+    public ItemOrdenEmbeddable(String recetaId, String nombreReceta, int cantidadTotal,
+                               EstadoItem estado, double porcionCantidad,
+<span class="fc" id="L47">                               UnidadMedida porcionUnidad, String porcionDescripcion) {</span>
+<span class="fc" id="L48">        this.recetaId = recetaId;</span>
+<span class="fc" id="L49">        this.nombreReceta = nombreReceta;</span>
+<span class="fc" id="L50">        this.cantidadTotal = cantidadTotal;</span>
+<span class="fc" id="L51">        this.estado = estado;</span>
+<span class="fc" id="L52">        this.porcionCantidad = porcionCantidad;</span>
+<span class="fc" id="L53">        this.porcionUnidad = porcionUnidad;</span>
+<span class="fc" id="L54">        this.porcionDescripcion = porcionDescripcion;</span>
+<span class="fc" id="L55">    }</span>
+
+<span class="fc" id="L57">    public String getRecetaId()            { return recetaId; }</span>
+<span class="fc" id="L58">    public String getNombreReceta()        { return nombreReceta; }</span>
+<span class="fc" id="L59">    public int getCantidadTotal()          { return cantidadTotal; }</span>
+<span class="fc" id="L60">    public EstadoItem getEstado()          { return estado; }</span>
+<span class="fc" id="L61">    public double getPorcionCantidad()     { return porcionCantidad; }</span>
+<span class="fc" id="L62">    public UnidadMedida getPorcionUnidad() { return porcionUnidad; }</span>
+<span class="fc" id="L63">    public String getPorcionDescripcion()  { return porcionDescripcion; }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

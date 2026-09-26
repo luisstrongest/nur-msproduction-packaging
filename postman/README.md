@@ -7,7 +7,7 @@ el viaje completo por JPA hasta la base de datos.
 
 | Archivo | Qué es |
 | :------ | :----- |
-| `bc4-integracion.postman_collection.json` | La colección: 23 requests, 69 aserciones |
+| `bc4-integracion.postman_collection.json` | La colección: 3 flujos, 32 requests, 92 aserciones |
 | `local.postman_environment.json` | Environment con `baseUrl` |
 
 ---
@@ -33,7 +33,8 @@ ambiente. En Git Bash o Linux: `./tools/validate-integration.sh`.
 
 Opciones útiles: `-KeepUp` deja el ambiente arriba al terminar; `-Twice` ejecuta la
 colección **dos veces contra la misma base de datos** y exige que las dos pasen (es la
-comprobación de repetibilidad).
+comprobación de repetibilidad); `-Report` genera además el reporte HTML entregable en
+`docs/reportes/integracion-postman/index.html`.
 
 ### Requisitos
 
@@ -49,8 +50,8 @@ En ambos modos la base de datos es **efímera**: se crea vacía y se destruye al
 === 4/5  Coleccion Postman (Newman) =============================
   ...
 === 5/5  Resumen ================================================
-  Requests   : 23 ejecutados, 0 fallidos
-  Aserciones : 69 ejecutadas, 0 fallidas
+  Requests   : 32 ejecutados, 0 fallidos
+  Aserciones : 92 ejecutadas, 0 fallidas
   Reporte    : ms-production-packaging\target\newman\report.json
 
 OK: validacion de integracion superada.
@@ -82,25 +83,47 @@ Para bajar el ambiente después: `docker compose -f docker-compose.integration.y
 
 ---
 
-## 3. Qué se prueba
+## 3. Qué se prueba: un flujo de negocio por carpeta
 
-### `01 - Flujo correcto` — 12 requests, el ciclo completo de BC4
+La colección se agrupa por **flujo**, no por endpoint. Cada carpeta es un flujo completo y
+**autocontenido** (construye su propio escenario), así que se puede lanzar sola:
+`newman run ... --folder "02 - Flujo B: Envasado, etiquetado y entrega a BC5"`.
+
+| Carpeta | Requests | Flujo |
+| :------ | -------: | :---- |
+| `01 - Flujo A: Produccion en cocina` | 10 | De la orden generada a la orden `COMPLETADA` |
+| `02 - Flujo B: Envasado, etiquetado y entrega a BC5` | 11 | Del paquete del paciente a `LISTO` y visible para Logística |
+| `03 - Flujo C: Rechazos` | 11 | Los errores esperados de los dos flujos anteriores |
+
+### `01 - Flujo A` — producción en cocina (10 requests)
 
 ```
-generar orden → consultar → iniciar preparación → preparar item 1 → preparar item 2
-    → crear paquete → verificar que la orden lo registró → envasar → etiquetar
-    → marcar listo → completar orden → listar paquetes de la orden
+generar orden → consultar por id → buscar por fecha → iniciar preparación
+    → aparece entre las EN_PREPARACION → preparar item 1 → preparar item 2
+    → completar → releer COMPLETADA → aparece entre las COMPLETADA
 ```
 
-No comprueba solo códigos 200: verifica el estado devuelto en cada transición, que
-`totalPorciones` se calcula bien (12 + 8 = 20), que la etiqueta sale con el formato del
-dominio (`Av. Mutualista 450, Ref: ... - Santa Cruz` y código `PKG-XXXXXXXX`), y que la
-orden acaba registrando el id del paquete. Los `GET` intercalados releen el recurso de la
+Verifica el estado devuelto en cada transición, que `totalPorciones` se calcula bien
+(12 + 8 = 20), que marcar un ítem no toca el otro, y que los filtros `?fecha=` y
+`?estado=` de la API devuelven lo que deben. Los `GET` intercalados releen el recurso de la
 base de datos: son los que demuestran que el mapeo JPA no pierde nada.
+
+### `02 - Flujo B` — envasado, etiquetado y entrega a BC5 (11 requests)
+
+```
+[setup] orden de 1 ítem EN_PREPARACION → crear paquete → la orden lo registra
+    → envasar → etiquetar → marcar LISTO → BC5 lo ve entre los listos para transferir
+    → preparar el ítem → completar la orden con el paquete → listar paquetes de la orden
+```
+
+Comprueba que la etiqueta sale con el formato del dominio
+(`Av. Mutualista 450, Ref: ... - Santa Cruz` y código `PKG-XXXXXXXX`), que `GET /paquetes`
+sin filtros (la consulta de Logística) solo ofrece paquetes `LISTO` e incluye éste con sus
+datos de entrega, y que la orden termina `COMPLETADA` con la referencia del paquete.
 
 > El paquete se crea **antes** de completar la orden: una orden `COMPLETADA` es inmutable.
 
-### `02 - Flujo incorrecto` — 11 requests (3 de preparación + 8 de verificación)
+### `03 - Flujo C` — rechazos (3 de preparación + 8 de verificación)
 
 Cada error comprueba el código HTTP **y** el cuerpo `ApiError`:
 
@@ -116,7 +139,11 @@ Cada error comprueba el código HTTP **y** el cuerpo `ApiError`:
 Además, tras los dos errores de negocio se relee el recurso para confirmar que **el rechazo
 no dejó estado a medias**.
 
-La carpeta es autocontenida: construye su propio escenario, así que puede ejecutarse sola.
+### Los mismos flujos, en Java
+
+Los flujos A y B están también como pruebas de integración en el lenguaje del proyecto
+(`FlujoProduccionIT`, `FlujoEnvasadoIT`), que además verifican los eventos de dominio
+publicados. Ver [`../docs/pruebas-integracion.md`](../docs/pruebas-integracion.md).
 
 ---
 
@@ -130,8 +157,8 @@ La colección debe pasar **dos veces seguidas contra la misma base de datos**:
 
 Es la propiedad que más fácil se rompe. Aquí el riesgo concreto es la regla *"una sola
 orden de producción por fecha"*: con una fecha fija, la segunda vuelta devolvería 409. Por
-eso las fechas se generan aleatorias en un script *pre-request*, con rangos distintos para
-cada carpeta.
+eso las fechas se generan aleatorias en un script *pre-request*, con rangos disjuntos para
+cada flujo (`1..4000`, `4001..8000` y `8001..12000` días).
 
 ---
 

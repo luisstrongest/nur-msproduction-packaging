@@ -174,10 +174,14 @@ Detalle del entorno de generación y validación de pruebas con IA:
 ## 7. Qué queda fuera a propósito
 
 `maven-surefire-plugin` está configurado para ejecutar únicamente `**/*Test.java`
-y excluir `**/*IT.java`. La clase `ProduccionApplicationIT` (que levanta el
-contexto de Spring y necesita datasource) queda por tanto **fuera de `mvn test`**
-y se habilitará junto con el resto de pruebas de integración:
+y excluir `**/*IT.java`. Todo lo que levanta el contexto de Spring queda por tanto
+**fuera de `mvn test`** y del reporte de cobertura, y lo ejecuta failsafe en su perfil:
 
-- pruebas de repositorio con `@DataJpaTest` + H2 o Testcontainers,
-- pruebas de la capa web con `@WebMvcTest` / `@SpringBootTest` + `MockMvc`,
-- prueba end-to-end del flujo orden → paquete → evento `PaqueteListo`.
+| Perfil | Clases | Qué prueban |
+| :----- | :----- | :---------- |
+| `integration` | `integration/FlujoProduccionIT`, `integration/FlujoEnvasadoIT` | Los flujos de negocio de punta a punta (HTTP → JPA → H2) y los eventos de dominio publicados |
+| `contract` | `contract/PaquetesProviderContractIT` | El pacto que publica BC5 |
+
+El `ProduccionApplicationIT` vacío (`contextLoads()`) que había aquí se eliminó: los flujos
+de integración ya levantan el contexto completo y además verifican algo. Detalle en
+[`pruebas-integracion.md`](pruebas-integracion.md).

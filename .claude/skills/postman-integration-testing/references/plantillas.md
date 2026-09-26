@@ -14,7 +14,7 @@ calcula el dominio.
 
 ```json
 {
-  "name": "1.1 Generar la orden de produccion",
+  "name": "A.1 Generar la orden de produccion",
   "event": [
     {
       "listen": "prerequest",
@@ -23,7 +23,7 @@ calcula el dominio.
         "exec": [
           "const dias = Math.floor(Math.random() * 4000) + 1;",
           "const fecha = new Date(Date.now() + dias * 86400000).toISOString().slice(0, 10);",
-          "pm.collectionVariables.set('fechaProduccion', fecha);"
+          "pm.collectionVariables.set('fechaA', fecha);"
         ]
       }
     },
@@ -37,7 +37,7 @@ calcula el dominio.
           "});",
           "",
           "const res = pm.response.json();",
-          "pm.collectionVariables.set('ordenId', res.id);",
+          "pm.collectionVariables.set('ordenAId', res.id);",
           "",
           "pm.test('La orden nace en estado PENDIENTE', function () {",
           "    pm.expect(res.estado).to.eql('PENDIENTE');",
@@ -55,7 +55,7 @@ calcula el dominio.
     "header": [{ "key": "Content-Type", "value": "application/json" }],
     "body": {
       "mode": "raw",
-      "raw": "{\n  \"fechaProduccion\": \"{{fechaProduccion}}\",\n  \"items\": []\n}",
+      "raw": "{\n  \"fechaProduccion\": \"{{fechaA}}\",\n  \"items\": []\n}",
       "options": { "raw": { "language": "json" } }
     },
     "url": {
@@ -113,8 +113,8 @@ estos, la coleccion solo prueba lo que la aplicacion tiene en memoria.
   "const res = pm.response.json();",
   "",
   "pm.test('La orden persistida es la misma que se creo', function () {",
-  "    pm.expect(res.id).to.eql(pm.collectionVariables.get('ordenId'));",
-  "    pm.expect(res.fechaProduccion).to.eql(pm.collectionVariables.get('fechaProduccion'));",
+  "    pm.expect(res.id).to.eql(pm.collectionVariables.get('ordenAId'));",
+  "    pm.expect(res.fechaProduccion).to.eql(pm.collectionVariables.get('fechaA'));",
   "    pm.expect(res.estado).to.eql('PENDIENTE');",
   "});",
   "",
@@ -214,10 +214,10 @@ asercion lleva el prefijo `[setup]` en el nombre.
 
 ```json
 "url": {
-  "raw": "{{baseUrl}}/api/v1/paquetes?ordenId={{ordenId}}",
+  "raw": "{{baseUrl}}/api/v1/paquetes?ordenId={{ordenAId}}",
   "host": ["{{baseUrl}}"],
   "path": ["api", "v1", "paquetes"],
-  "query": [{ "key": "ordenId", "value": "{{ordenId}}" }]
+  "query": [{ "key": "ordenId", "value": "{{ordenAId}}" }]
 }
 ```
 

@@ -1,16 +1,16 @@
 {
   "info": {
     "name": "BC4 - Pruebas de integracion (ms-production-packaging)",
-    "description": "PRUEBAS DE INTEGRACION del microservicio BC4 (Produccion y Envasado) sobre la API REST realmente levantada.\n\nQue valida esto y no validan los tests unitarios: enrutamiento HTTP y serializacion JSON, la validacion @Valid de los DTOs, el mapeo de excepciones de dominio a codigos HTTP del GlobalExceptionHandler, y el viaje completo por JPA/Hibernate hasta una base de datos real y de vuelta. Los tests unitarios mockean todo eso.\n\nDOS CARPETAS:\n  01 - Flujo correcto   : el ciclo end-to-end de BC4, 12 requests encadenados.\n  02 - Flujo incorrecto : escenarios de error con su codigo HTTP y su ApiError.\n\nCOMO EJECUTARLA:\n  - Postman: importar tambien local.postman_environment.json, seleccionar el\n    environment y usar Runner sobre la coleccion completa (en orden).\n  - Newman:  npx newman run postman/bc4-integracion.postman_collection.json -e postman/local.postman_environment.json\n  - Gate:    .\\tools\\validate-integration.ps1  (levanta el ambiente y la corre)\n\nREPETIBLE: las fechas de produccion se generan aleatorias en pre-request porque\nla regla de negocio admite una sola orden por fecha. Ejecutarla dos veces seguidas\ncontra la misma base de datos debe dar verde las dos veces.\n\nAmbiente por defecto: http://localhost:8082 (docker-compose.integration.yml).",
+    "description": "PRUEBAS DE INTEGRACION del microservicio BC4 (Produccion y Envasado) sobre la API REST realmente levantada.\n\nQue valida esto y no validan los tests unitarios: enrutamiento HTTP y serializacion JSON, la validacion @Valid de los DTOs, el mapeo de excepciones de dominio a codigos HTTP del GlobalExceptionHandler, y el viaje completo por JPA/Hibernate hasta una base de datos real y de vuelta. Los tests unitarios mockean todo eso.\n\nTRES CARPETAS, UNA POR FLUJO (cada una autocontenida, se puede lanzar sola con --folder):\n  01 - Flujo A : produccion en cocina, de la orden generada a la orden COMPLETADA.\n  02 - Flujo B : envasado y etiquetado del paquete hasta dejarlo LISTO para BC5.\n  03 - Flujo C : rechazos esperados con su codigo HTTP y su ApiError.\n\nCOMO EJECUTARLA:\n  - Postman: importar tambien local.postman_environment.json, seleccionar el\n    environment y usar Runner sobre la coleccion completa (en orden).\n  - Newman:  npx newman run postman/bc4-integracion.postman_collection.json -e postman/local.postman_environment.json\n  - Gate:    .\\tools\\validate-integration.ps1  (levanta el ambiente y la corre)\n\nREPETIBLE: las fechas de produccion se generan aleatorias en pre-request porque\nla regla de negocio admite una sola orden por fecha. Ejecutarla dos veces seguidas\ncontra la misma base de datos debe dar verde las dos veces.\n\nAmbiente por defecto: http://localhost:8082 (docker-compose.integration.yml).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "01 - Flujo correcto (camino feliz end-to-end)",
-      "description": "Ciclo completo de BC4 sobre el microservicio realmente levantado: se genera una orden de produccion, se prepara en cocina, se crea el paquete del paciente, se envasa, se etiqueta y se marca listo para BC5, y finalmente se completa la orden.\n\nCada request encadena su resultado en variables de coleccion y comprueba el ESTADO DEVUELTO, no solo el codigo HTTP. Los GET intercalados verifican que el estado sobrevive al viaje por JPA/Hibernate hasta la base de datos y vuelve igual: eso es exactamente lo que los tests unitarios no pueden ver, porque mockean el repositorio.\n\nORDEN OBLIGATORIO: el paquete se crea ANTES de completar la orden. Una orden COMPLETADA es inmutable (OrdenYaCompletadaException), asi que registrar un paquete sobre ella fallaria.",
+      "name": "01 - Flujo A: Produccion en cocina (orden de produccion)",
+      "description": "FLUJO DE NEGOCIO COMPLETO #1 - la cocina recibe el calendario y produce.\n\ngenerar orden -> consultar por id y por fecha -> iniciar preparacion -> preparar cada item\n    -> completar -> releer COMPLETADA -> aparece en el filtro por estado\n\nAutocontenido: no depende de ningun otro flujo. La orden no lleva paquetes: completar solo\nexige que todos los items esten PREPARADO. Los GET intercalados releen el recurso de la base\nde datos y son los que demuestran que el mapeo JPA no pierde nada.",
       "item": [
         {
-          "name": "1.1 Generar la orden de produccion",
+          "name": "A.1 Generar la orden de produccion (desde el calendario)",
           "event": [
             {
               "listen": "prerequest",
@@ -21,7 +21,7 @@
                   "// Con una fecha fija esta coleccion solo seria verde la primera vez.",
                   "const dias = Math.floor(Math.random() * 4000) + 1;",
                   "const fecha = new Date(Date.now() + dias * 86400000).toISOString().slice(0, 10);",
-                  "pm.collectionVariables.set('fechaProduccion', fecha);"
+                  "pm.collectionVariables.set('fechaA', fecha);"
                 ]
               }
             },
@@ -35,9 +35,9 @@
                   "});",
                   "",
                   "const res = pm.response.json();",
-                  "pm.collectionVariables.set('ordenId', res.id);",
-                  "pm.collectionVariables.set('recetaId', res.items[0].recetaId);",
-                  "pm.collectionVariables.set('recetaId2', res.items[1].recetaId);",
+                  "pm.collectionVariables.set('ordenAId', res.id);",
+                  "pm.collectionVariables.set('recetaA1', res.items[0].recetaId);",
+                  "pm.collectionVariables.set('recetaA2', res.items[1].recetaId);",
                   "",
                   "pm.test('Devuelve el id de la orden generada', function () {",
                   "    pm.expect(res.id).to.be.a('string').and.to.not.be.empty;",
@@ -48,7 +48,7 @@
                   "});",
                   "",
                   "pm.test('Conserva la fecha de produccion solicitada', function () {",
-                  "    pm.expect(res.fechaProduccion).to.eql(pm.collectionVariables.get('fechaProduccion'));",
+                  "    pm.expect(res.fechaProduccion).to.eql(pm.collectionVariables.get('fechaA'));",
                   "});",
                   "",
                   "pm.test('totalPorciones = pacientes por receta (12 + 8 = 20)', function () {",
@@ -91,7 +91,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fechaProduccion\": \"{{fechaProduccion}}\",\n  \"items\": [\n    {\n      \"recetaId\": \"REC-001\",\n      \"nombreReceta\": \"Pure de zapallo con pollo\",\n      \"numeroPacientes\": 12,\n      \"cantidadPorcion\": 250,\n      \"unidadMedida\": \"GRAMOS\",\n      \"descripcionPorcion\": \"Porcion individual estandar\"\n    },\n    {\n      \"recetaId\": \"REC-002\",\n      \"nombreReceta\": \"Sopa de verduras\",\n      \"numeroPacientes\": 8,\n      \"cantidadPorcion\": 300,\n      \"unidadMedida\": \"MILILITROS\",\n      \"descripcionPorcion\": \"Racion tibia de 300 ml\"\n    }\n  ]\n}",
+              "raw": "{\n  \"fechaProduccion\": \"{{fechaA}}\",\n  \"items\": [\n    {\n      \"recetaId\": \"REC-001\",\n      \"nombreReceta\": \"Pure de zapallo con pollo\",\n      \"numeroPacientes\": 12,\n      \"cantidadPorcion\": 250,\n      \"unidadMedida\": \"GRAMOS\",\n      \"descripcionPorcion\": \"Porcion individual estandar\"\n    },\n    {\n      \"recetaId\": \"REC-002\",\n      \"nombreReceta\": \"Sopa de verduras\",\n      \"numeroPacientes\": 8,\n      \"cantidadPorcion\": 300,\n      \"unidadMedida\": \"MILILITROS\",\n      \"descripcionPorcion\": \"Racion tibia de 300 ml\"\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -103,7 +103,7 @@
           "response": []
         },
         {
-          "name": "1.2 Consultar la orden recien creada",
+          "name": "A.2 Consultar la orden recien creada",
           "event": [
             {
               "listen": "test",
@@ -117,8 +117,8 @@
                   "const res = pm.response.json();",
                   "",
                   "pm.test('La orden persistida es la misma que se creo', function () {",
-                  "    pm.expect(res.id).to.eql(pm.collectionVariables.get('ordenId'));",
-                  "    pm.expect(res.fechaProduccion).to.eql(pm.collectionVariables.get('fechaProduccion'));",
+                  "    pm.expect(res.id).to.eql(pm.collectionVariables.get('ordenAId'));",
+                  "    pm.expect(res.fechaProduccion).to.eql(pm.collectionVariables.get('fechaA'));",
                   "    pm.expect(res.estado).to.eql('PENDIENTE');",
                   "});",
                   "",
@@ -136,7 +136,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/ordenes/{{ordenId}}",
+              "raw": "{{baseUrl}}/api/v1/ordenes/{{ordenAId}}",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -144,7 +144,7 @@
                 "api",
                 "v1",
                 "ordenes",
-                "{{ordenId}}"
+                "{{ordenAId}}"
               ]
             },
             "description": "Prueba de ida y vuelta por la persistencia: la orden se lee de nuevo desde la base de datos. Si el mapeo dominio <-> entidad JPA perdiera items, estado o fecha, este request lo delata (un test unitario del controller no puede, porque mockea el repositorio)."
@@ -152,7 +152,52 @@
           "response": []
         },
         {
-          "name": "1.3 Iniciar la preparacion",
+          "name": "A.3 Buscar la orden por su fecha de produccion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('Devuelve exactamente la orden de esa fecha', function () {",
+                  "    pm.expect(res).to.be.an('array').with.lengthOf(1);",
+                  "    pm.expect(res[0].id).to.eql(pm.collectionVariables.get('ordenAId'));",
+                  "    pm.expect(res[0].fechaProduccion).to.eql(pm.collectionVariables.get('fechaA'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ordenes?fecha={{fechaA}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ordenes"
+              ],
+              "query": [
+                {
+                  "key": "fecha",
+                  "value": "{{fechaA}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "A.4 Iniciar la preparacion en cocina",
           "event": [
             {
               "listen": "test",
@@ -180,7 +225,7 @@
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/ordenes/{{ordenId}}/iniciar-preparacion",
+              "raw": "{{baseUrl}}/api/v1/ordenes/{{ordenAId}}/iniciar-preparacion",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -188,7 +233,7 @@
                 "api",
                 "v1",
                 "ordenes",
-                "{{ordenId}}",
+                "{{ordenAId}}",
                 "iniciar-preparacion"
               ]
             },
@@ -197,7 +242,55 @@
           "response": []
         },
         {
-          "name": "1.4 Marcar preparado el primer item (REC-001)",
+          "name": "A.5 La orden aparece entre las EN_PREPARACION",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "const orden = res.find(function (o) { return o.id === pm.collectionVariables.get('ordenAId'); });",
+                  "",
+                  "pm.test('El filtro por estado incluye la orden', function () {",
+                  "    pm.expect(orden, 'orden en la lista').to.not.be.undefined;",
+                  "});",
+                  "",
+                  "pm.test('Todas las ordenes devueltas estan EN_PREPARACION', function () {",
+                  "    pm.expect(res.every(function (o) { return o.estado === 'EN_PREPARACION'; })).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ordenes?estado=EN_PREPARACION",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ordenes"
+              ],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "EN_PREPARACION"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "A.6 Marcar preparado el primer item (REC-001)",
           "event": [
             {
               "listen": "test",
@@ -214,11 +307,11 @@
                   "}",
                   "",
                   "pm.test('REC-001 queda PREPARADO', function () {",
-                  "    pm.expect(item(pm.collectionVariables.get('recetaId')).estado).to.eql('PREPARADO');",
+                  "    pm.expect(item(pm.collectionVariables.get('recetaA1')).estado).to.eql('PREPARADO');",
                   "});",
                   "",
                   "pm.test('REC-002 NO se toco: sigue PENDIENTE', function () {",
-                  "    pm.expect(item(pm.collectionVariables.get('recetaId2')).estado).to.eql('PENDIENTE');",
+                  "    pm.expect(item(pm.collectionVariables.get('recetaA2')).estado).to.eql('PENDIENTE');",
                   "});",
                   "",
                   "pm.test('La orden sigue EN_PREPARACION', function () {",
@@ -232,7 +325,7 @@
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/ordenes/{{ordenId}}/items/{{recetaId}}/preparar",
+              "raw": "{{baseUrl}}/api/v1/ordenes/{{ordenAId}}/items/{{recetaA1}}/preparar",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -240,9 +333,9 @@
                 "api",
                 "v1",
                 "ordenes",
-                "{{ordenId}}",
+                "{{ordenAId}}",
                 "items",
-                "{{recetaId}}",
+                "{{recetaA1}}",
                 "preparar"
               ]
             },
@@ -251,7 +344,7 @@
           "response": []
         },
         {
-          "name": "1.5 Marcar preparado el segundo item (REC-002)",
+          "name": "A.7 Marcar preparado el segundo item (REC-002)",
           "event": [
             {
               "listen": "test",
@@ -275,7 +368,7 @@
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/ordenes/{{ordenId}}/items/{{recetaId2}}/preparar",
+              "raw": "{{baseUrl}}/api/v1/ordenes/{{ordenAId}}/items/{{recetaA2}}/preparar",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -283,9 +376,9 @@
                 "api",
                 "v1",
                 "ordenes",
-                "{{ordenId}}",
+                "{{ordenAId}}",
                 "items",
-                "{{recetaId2}}",
+                "{{recetaA2}}",
                 "preparar"
               ]
             },
@@ -294,7 +387,246 @@
           "response": []
         },
         {
-          "name": "1.6 Crear el paquete del paciente",
+          "name": "A.8 Completar la orden",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('La orden queda COMPLETADA', function () {",
+                  "    pm.expect(res.estado).to.eql('COMPLETADA');",
+                  "});",
+                  "",
+                  "pm.test('Todos sus items quedan PREPARADO', function () {",
+                  "    pm.expect(res.items.map(function (i) { return i.estado; })).to.eql(['PREPARADO', 'PREPARADO']);",
+                  "});",
+                  "",
+                  "pm.test('Completar no altera el total de porciones (20)', function () {",
+                  "    pm.expect(res.totalPorciones).to.eql(20);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ordenes/{{ordenAId}}/completar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ordenes",
+                "{{ordenAId}}",
+                "completar"
+              ]
+            }
+          }
+        },
+        {
+          "name": "A.9 Releer la orden: COMPLETADA persistida",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('El estado COMPLETADA sobrevivio al viaje por JPA', function () {",
+                  "    pm.expect(res.estado).to.eql('COMPLETADA');",
+                  "    pm.expect(res.items.every(function (i) { return i.estado === 'PREPARADO'; })).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test('Es la orden de la fecha pedida', function () {",
+                  "    pm.expect(res.fechaProduccion).to.eql(pm.collectionVariables.get('fechaA'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ordenes/{{ordenAId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ordenes",
+                "{{ordenAId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "A.10 La orden aparece entre las COMPLETADA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('El filtro por estado incluye la orden completada', function () {",
+                  "    pm.expect(res.map(function (o) { return o.id; })).to.include(pm.collectionVariables.get('ordenAId'));",
+                  "});",
+                  "",
+                  "pm.test('Ya no aparece entre las EN_PREPARACION: todas son COMPLETADA', function () {",
+                  "    pm.expect(res.every(function (o) { return o.estado === 'COMPLETADA'; })).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ordenes?estado=COMPLETADA",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ordenes"
+              ],
+              "query": [
+                {
+                  "key": "estado",
+                  "value": "COMPLETADA"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Flujo B: Envasado, etiquetado y entrega a BC5",
+      "description": "FLUJO DE NEGOCIO COMPLETO #2 - del paquete del paciente a la entrega a Logistica.\n\n[setup] orden EN_PREPARACION -> crear paquete -> la orden lo registra -> envasar -> etiquetar\n    -> LISTO -> BC5 lo ve en los listos para transferir -> preparar item -> completar la orden\n    con el paquete registrado -> listar paquetes de la orden\n\nAutocontenido: construye su propia orden de un solo item. El paquete se crea ANTES de\ncompletar la orden porque una orden COMPLETADA es inmutable.",
+      "item": [
+        {
+          "name": "B.0a [setup] Generar la orden del lote a envasar",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Fecha propia del flujo B (rango disjunto con A y C).",
+                  "// La regla de negocio permite UNA orden por fecha: con una fecha fija la",
+                  "// coleccion solo seria verde la primera vez.",
+                  "const dias = Math.floor(Math.random() * 4000) + 4001;",
+                  "const fecha = new Date(Date.now() + dias * 86400000).toISOString().slice(0, 10);",
+                  "pm.collectionVariables.set('fechaB', fecha);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[setup] La orden del flujo B se crea PENDIENTE', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "    pm.expect(pm.response.json().estado).to.eql('PENDIENTE');",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set('ordenBId', pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ordenes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ordenes"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fechaProduccion\": \"{{fechaB}}\",\n  \"items\": [\n    {\n      \"recetaId\": \"REC-010\",\n      \"nombreReceta\": \"Guiso de lentejas\",\n      \"numeroPacientes\": 5,\n      \"cantidadPorcion\": 350,\n      \"unidadMedida\": \"GRAMOS\",\n      \"descripcionPorcion\": \"Porcion de almuerzo\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "B.0b [setup] Iniciar su preparacion",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[setup] La orden del flujo B queda EN_PREPARACION', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().estado).to.eql('EN_PREPARACION');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ordenes/{{ordenBId}}/iniciar-preparacion",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ordenes",
+                "{{ordenBId}}",
+                "iniciar-preparacion"
+              ]
+            }
+          }
+        },
+        {
+          "name": "B.1 Crear el paquete del paciente",
           "event": [
             {
               "listen": "test",
@@ -306,7 +638,7 @@
                   "});",
                   "",
                   "const res = pm.response.json();",
-                  "pm.collectionVariables.set('paqueteId', res.id);",
+                  "pm.collectionVariables.set('paqueteBId', res.id);",
                   "",
                   "pm.test('El paquete nace en ENVASADO_PENDIENTE', function () {",
                   "    pm.expect(res.estado).to.eql('ENVASADO_PENDIENTE');",
@@ -314,7 +646,7 @@
                   "",
                   "pm.test('Queda vinculado al paciente y a su orden', function () {",
                   "    pm.expect(res.pacienteId).to.eql('PAC-1001');",
-                  "    pm.expect(res.ordenId).to.eql(pm.collectionVariables.get('ordenId'));",
+                  "    pm.expect(res.ordenId).to.eql(pm.collectionVariables.get('ordenBId'));",
                   "});",
                   "",
                   "pm.test('Todavia no tiene etiqueta', function () {",
@@ -345,7 +677,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"pacienteId\": \"PAC-1001\",\n  \"ordenId\": \"{{ordenId}}\"\n}",
+              "raw": "{\n  \"pacienteId\": \"PAC-1001\",\n  \"ordenId\": \"{{ordenBId}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -357,7 +689,7 @@
           "response": []
         },
         {
-          "name": "1.7 Verificar que la orden registro el paquete",
+          "name": "B.2 Verificar que la orden registro el paquete",
           "event": [
             {
               "listen": "test",
@@ -371,7 +703,7 @@
                   "const res = pm.response.json();",
                   "",
                   "pm.test('paqueteIds contiene el paquete recien creado', function () {",
-                  "    pm.expect(res.paqueteIds).to.include(pm.collectionVariables.get('paqueteId'));",
+                  "    pm.expect(res.paqueteIds).to.include(pm.collectionVariables.get('paqueteBId'));",
                   "});"
                 ]
               }
@@ -381,7 +713,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/ordenes/{{ordenId}}",
+              "raw": "{{baseUrl}}/api/v1/ordenes/{{ordenBId}}",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -389,7 +721,7 @@
                 "api",
                 "v1",
                 "ordenes",
-                "{{ordenId}}"
+                "{{ordenBId}}"
               ]
             },
             "description": "Consistencia entre agregados a traves de la base de datos: la orden debe haber persistido el id del paquete creado en el request anterior."
@@ -397,7 +729,7 @@
           "response": []
         },
         {
-          "name": "1.8 Registrar el envasado",
+          "name": "B.3 Registrar el envasado",
           "event": [
             {
               "listen": "test",
@@ -425,7 +757,7 @@
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/paquetes/{{paqueteId}}/envasar",
+              "raw": "{{baseUrl}}/api/v1/paquetes/{{paqueteBId}}/envasar",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -433,7 +765,7 @@
                 "api",
                 "v1",
                 "paquetes",
-                "{{paqueteId}}",
+                "{{paqueteBId}}",
                 "envasar"
               ]
             },
@@ -442,7 +774,7 @@
           "response": []
         },
         {
-          "name": "1.9 Generar la etiqueta",
+          "name": "B.4 Generar la etiqueta",
           "event": [
             {
               "listen": "test",
@@ -487,7 +819,7 @@
               }
             ],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/paquetes/{{paqueteId}}/etiquetar",
+              "raw": "{{baseUrl}}/api/v1/paquetes/{{paqueteBId}}/etiquetar",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -495,7 +827,7 @@
                 "api",
                 "v1",
                 "paquetes",
-                "{{paqueteId}}",
+                "{{paqueteBId}}",
                 "etiquetar"
               ]
             },
@@ -513,7 +845,7 @@
           "response": []
         },
         {
-          "name": "1.10 Marcar el paquete como LISTO",
+          "name": "B.5 Marcar el paquete como LISTO",
           "event": [
             {
               "listen": "test",
@@ -542,7 +874,7 @@
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/paquetes/{{paqueteId}}/marcar-listo",
+              "raw": "{{baseUrl}}/api/v1/paquetes/{{paqueteBId}}/marcar-listo",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -550,7 +882,7 @@
                 "api",
                 "v1",
                 "paquetes",
-                "{{paqueteId}}",
+                "{{paqueteBId}}",
                 "marcar-listo"
               ]
             },
@@ -559,7 +891,99 @@
           "response": []
         },
         {
-          "name": "1.11 Completar la orden",
+          "name": "B.6 BC5 consulta los paquetes listos para transferir",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "// Sin filtros el endpoint devuelve los LISTOS pendientes de transferencia:",
+                  "// es la consulta que hace Logistica (BC5) para recoger los paquetes.",
+                  "const res = pm.response.json();",
+                  "const paquete = res.find(function (p) { return p.id === pm.collectionVariables.get('paqueteBId'); });",
+                  "",
+                  "pm.test('El paquete aparece entre los listos para BC5', function () {",
+                  "    pm.expect(paquete, 'paquete en la lista').to.not.be.undefined;",
+                  "});",
+                  "",
+                  "pm.test('Solo se ofrecen paquetes en estado LISTO', function () {",
+                  "    pm.expect(res.every(function (p) { return p.estado === 'LISTO'; })).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test('BC5 recibe los datos de entrega completos', function () {",
+                  "    pm.expect(paquete.pacienteId).to.eql('PAC-1001');",
+                  "    pm.expect(paquete.etiqueta.direccion).to.eql('Av. Mutualista 450, Ref: Edificio azul, piso 2 - Santa Cruz');",
+                  "    pm.expect(paquete.etiqueta.codigoIdentificacion).to.match(/^PKG-[0-9A-F]{8}$/);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/paquetes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "paquetes"
+              ]
+            }
+          }
+        },
+        {
+          "name": "B.7 Preparar el item de la orden (REC-010)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200 OK', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const res = pm.response.json();",
+                  "",
+                  "pm.test('El unico item queda PREPARADO', function () {",
+                  "    pm.expect(res.items).to.have.lengthOf(1);",
+                  "    pm.expect(res.items[0].estado).to.eql('PREPARADO');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ordenes/{{ordenBId}}/items/REC-010/preparar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "ordenes",
+                "{{ordenBId}}",
+                "items",
+                "REC-010",
+                "preparar"
+              ]
+            }
+          }
+        },
+        {
+          "name": "B.8 Completar la orden con su paquete registrado",
           "event": [
             {
               "listen": "test",
@@ -577,7 +1001,7 @@
                   "});",
                   "",
                   "pm.test('Se completa con el paquete generado registrado', function () {",
-                  "    pm.expect(res.paqueteIds).to.include(pm.collectionVariables.get('paqueteId'));",
+                  "    pm.expect(res.paqueteIds).to.include(pm.collectionVariables.get('paqueteBId'));",
                   "});"
                 ]
               }
@@ -587,7 +1011,7 @@
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/ordenes/{{ordenId}}/completar",
+              "raw": "{{baseUrl}}/api/v1/ordenes/{{ordenBId}}/completar",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -595,7 +1019,7 @@
                 "api",
                 "v1",
                 "ordenes",
-                "{{ordenId}}",
+                "{{ordenBId}}",
                 "completar"
               ]
             },
@@ -604,7 +1028,7 @@
           "response": []
         },
         {
-          "name": "1.12 Listar los paquetes de la orden",
+          "name": "B.9 Listar los paquetes de la orden",
           "event": [
             {
               "listen": "test",
@@ -619,7 +1043,7 @@
                   "",
                   "pm.test('Devuelve exactamente el paquete de esta orden', function () {",
                   "    pm.expect(res).to.be.an('array').with.lengthOf(1);",
-                  "    pm.expect(res[0].id).to.eql(pm.collectionVariables.get('paqueteId'));",
+                  "    pm.expect(res[0].id).to.eql(pm.collectionVariables.get('paqueteBId'));",
                   "});",
                   "",
                   "pm.test('El paquete quedo LISTO y con su etiqueta en base de datos', function () {",
@@ -635,7 +1059,7 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/paquetes?ordenId={{ordenId}}",
+              "raw": "{{baseUrl}}/api/v1/paquetes?ordenId={{ordenBId}}",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -647,7 +1071,7 @@
               "query": [
                 {
                   "key": "ordenId",
-                  "value": "{{ordenId}}"
+                  "value": "{{ordenBId}}"
                 }
               ]
             },
@@ -658,21 +1082,21 @@
       ]
     },
     {
-      "name": "02 - Flujo incorrecto (errores esperados)",
-      "description": "Comprueba que la API rechaza lo que debe rechazar, con el codigo HTTP correcto y un cuerpo ApiError util. Es la parte que valida el GlobalExceptionHandler de punta a punta: una excepcion de dominio tiene que llegar al cliente como 409, no como 500.\n\nLa carpeta es AUTOCONTENIDA: los tres primeros requests (2.0) preparan su propio escenario, asi que no depende de que se haya ejecutado la carpeta 01.\n\nMapeo verificado:\n  @Valid fallido            -> 400 Validacion fallida\n  IllegalStateException     -> 409 Conflicto de estado\n  DomainException           -> 409 Regla de negocio violada\n  NoSuchElementException    -> 404 Recurso no encontrado",
+      "name": "03 - Flujo C: Rechazos (errores esperados)",
+      "description": "Comprueba que la API rechaza lo que debe rechazar, con el codigo HTTP correcto y un cuerpo ApiError util. Es la parte que valida el GlobalExceptionHandler de punta a punta: una excepcion de dominio tiene que llegar al cliente como 409, no como 500.\n\nLa carpeta es AUTOCONTENIDA: los tres primeros requests (C.0) preparan su propio escenario, asi que no depende de que se haya ejecutado los flujos A y B.\n\nMapeo verificado:\n  @Valid fallido            -> 400 Validacion fallida\n  IllegalStateException     -> 409 Conflicto de estado\n  DomainException           -> 409 Regla de negocio violada\n  NoSuchElementException    -> 404 Recurso no encontrado",
       "item": [
         {
-          "name": "2.0a [setup] Generar la orden auxiliar del escenario",
+          "name": "C.0a [setup] Generar la orden auxiliar del escenario",
           "event": [
             {
               "listen": "prerequest",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "// Fecha propia de esta carpeta, distinta de la del flujo correcto.",
-                  "const dias = Math.floor(Math.random() * 4000) + 4001;",
+                  "// Fecha propia de esta carpeta, rango disjunto con los flujos A y B.",
+                  "const dias = Math.floor(Math.random() * 4000) + 8001;",
                   "const fecha = new Date(Date.now() + dias * 86400000).toISOString().slice(0, 10);",
-                  "pm.collectionVariables.set('fechaAlterna', fecha);"
+                  "pm.collectionVariables.set('fechaC', fecha);"
                 ]
               }
             },
@@ -712,19 +1136,19 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fechaProduccion\": \"{{fechaAlterna}}\",\n  \"items\": [\n    {\n      \"recetaId\": \"REC-001\",\n      \"nombreReceta\": \"Pure de zapallo con pollo\",\n      \"numeroPacientes\": 12,\n      \"cantidadPorcion\": 250,\n      \"unidadMedida\": \"GRAMOS\",\n      \"descripcionPorcion\": \"Porcion individual estandar\"\n    },\n    {\n      \"recetaId\": \"REC-002\",\n      \"nombreReceta\": \"Sopa de verduras\",\n      \"numeroPacientes\": 8,\n      \"cantidadPorcion\": 300,\n      \"unidadMedida\": \"MILILITROS\",\n      \"descripcionPorcion\": \"Racion tibia de 300 ml\"\n    }\n  ]\n}",
+              "raw": "{\n  \"fechaProduccion\": \"{{fechaC}}\",\n  \"items\": [\n    {\n      \"recetaId\": \"REC-001\",\n      \"nombreReceta\": \"Pure de zapallo con pollo\",\n      \"numeroPacientes\": 12,\n      \"cantidadPorcion\": 250,\n      \"unidadMedida\": \"GRAMOS\",\n      \"descripcionPorcion\": \"Porcion individual estandar\"\n    },\n    {\n      \"recetaId\": \"REC-002\",\n      \"nombreReceta\": \"Sopa de verduras\",\n      \"numeroPacientes\": 8,\n      \"cantidadPorcion\": 300,\n      \"unidadMedida\": \"MILILITROS\",\n      \"descripcionPorcion\": \"Racion tibia de 300 ml\"\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             },
-            "description": "Escenario propio de esta carpeta. Su fecha se guarda en fechaAlterna para provocar despues el conflicto por fecha duplicada."
+            "description": "Escenario propio de esta carpeta. Su fecha se guarda en fechaC para provocar despues el conflicto por fecha duplicada."
           },
           "response": []
         },
         {
-          "name": "2.0b [setup] Iniciar su preparacion",
+          "name": "C.0b [setup] Iniciar su preparacion",
           "event": [
             {
               "listen": "test",
@@ -760,7 +1184,7 @@
           "response": []
         },
         {
-          "name": "2.0c [setup] Crear el paquete auxiliar",
+          "name": "C.0c [setup] Crear el paquete auxiliar",
           "event": [
             {
               "listen": "test",
@@ -810,7 +1234,7 @@
           "response": []
         },
         {
-          "name": "2.1 Orden sin fecha y sin items -> 400",
+          "name": "C.1 Orden sin fecha y sin items -> 400",
           "event": [
             {
               "listen": "test",
@@ -871,7 +1295,7 @@
           "response": []
         },
         {
-          "name": "2.2 Item con numeroPacientes = 0 -> 400",
+          "name": "C.2 Item con numeroPacientes = 0 -> 400",
           "event": [
             {
               "listen": "test",
@@ -935,7 +1359,7 @@
           "response": []
         },
         {
-          "name": "2.3 Segunda orden para la misma fecha -> 409",
+          "name": "C.3 Segunda orden para la misma fecha -> 409",
           "event": [
             {
               "listen": "test",
@@ -955,7 +1379,7 @@
                   "",
                   "pm.test('El mensaje nombra la fecha en conflicto', function () {",
                   "    pm.expect(err.mensaje).to.include('Ya existe una orden');",
-                  "    pm.expect(err.mensaje).to.include(pm.collectionVariables.get('fechaAlterna'));",
+                  "    pm.expect(err.mensaje).to.include(pm.collectionVariables.get('fechaC'));",
                   "});"
                 ]
               }
@@ -982,7 +1406,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"fechaProduccion\": \"{{fechaAlterna}}\",\n  \"items\": [\n    {\n      \"recetaId\": \"REC-001\",\n      \"nombreReceta\": \"Pure de zapallo con pollo\",\n      \"numeroPacientes\": 12,\n      \"cantidadPorcion\": 250,\n      \"unidadMedida\": \"GRAMOS\",\n      \"descripcionPorcion\": \"Porcion individual estandar\"\n    },\n    {\n      \"recetaId\": \"REC-002\",\n      \"nombreReceta\": \"Sopa de verduras\",\n      \"numeroPacientes\": 8,\n      \"cantidadPorcion\": 300,\n      \"unidadMedida\": \"MILILITROS\",\n      \"descripcionPorcion\": \"Racion tibia de 300 ml\"\n    }\n  ]\n}",
+              "raw": "{\n  \"fechaProduccion\": \"{{fechaC}}\",\n  \"items\": [\n    {\n      \"recetaId\": \"REC-001\",\n      \"nombreReceta\": \"Pure de zapallo con pollo\",\n      \"numeroPacientes\": 12,\n      \"cantidadPorcion\": 250,\n      \"unidadMedida\": \"GRAMOS\",\n      \"descripcionPorcion\": \"Porcion individual estandar\"\n    },\n    {\n      \"recetaId\": \"REC-002\",\n      \"nombreReceta\": \"Sopa de verduras\",\n      \"numeroPacientes\": 8,\n      \"cantidadPorcion\": 300,\n      \"unidadMedida\": \"MILILITROS\",\n      \"descripcionPorcion\": \"Racion tibia de 300 ml\"\n    }\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -994,7 +1418,7 @@
           "response": []
         },
         {
-          "name": "2.4 Consultar una orden inexistente -> 404",
+          "name": "C.4 Consultar una orden inexistente -> 404",
           "event": [
             {
               "listen": "test",
@@ -1040,7 +1464,7 @@
           "response": []
         },
         {
-          "name": "2.5 Etiquetar un paquete sin envasar -> 409",
+          "name": "C.5 Etiquetar un paquete sin envasar -> 409",
           "event": [
             {
               "listen": "test",
@@ -1100,7 +1524,7 @@
           "response": []
         },
         {
-          "name": "2.6 El paquete no quedo corrupto tras el error",
+          "name": "C.6 El paquete no quedo corrupto tras el error",
           "event": [
             {
               "listen": "test",
@@ -1141,7 +1565,7 @@
           "response": []
         },
         {
-          "name": "2.7 Completar una orden con items sin preparar -> 409",
+          "name": "C.7 Completar una orden con items sin preparar -> 409",
           "event": [
             {
               "listen": "test",
@@ -1187,7 +1611,7 @@
           "response": []
         },
         {
-          "name": "2.8 La orden no quedo COMPLETADA tras el error",
+          "name": "C.8 La orden no quedo COMPLETADA tras el error",
           "event": [
             {
               "listen": "test",
@@ -1237,32 +1661,42 @@
       "type": "string"
     },
     {
-      "key": "fechaProduccion",
+      "key": "fechaA",
       "value": "",
       "type": "string"
     },
     {
-      "key": "ordenId",
+      "key": "ordenAId",
       "value": "",
       "type": "string"
     },
     {
-      "key": "recetaId",
+      "key": "recetaA1",
       "value": "REC-001",
       "type": "string"
     },
     {
-      "key": "recetaId2",
+      "key": "recetaA2",
       "value": "REC-002",
       "type": "string"
     },
     {
-      "key": "paqueteId",
+      "key": "fechaB",
       "value": "",
       "type": "string"
     },
     {
-      "key": "fechaAlterna",
+      "key": "ordenBId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "paqueteBId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "fechaC",
       "value": "",
       "type": "string"
     },

@@ -26,19 +26,20 @@ aplicación. Eso deja cuatro capas sin verificar de punta a punta:
 | :--- | :-------------------------------- | :------------------- |
 | Enrutamiento HTTP y códigos de estado | El controller se instancia a mano, sin Spring MVC | Todos |
 | Serialización JSON | Se comprueban objetos, no el cuerpo emitido | `etiqueta: null` hasta ETIQUETADO |
-| Validación `@Valid` de los DTOs | No hay binding real | `2.1` y `2.2` → 400 con `detalles[]` |
+| Validación `@Valid` de los DTOs | No hay binding real | `C.1` y `C.2` → 400 con `detalles[]` |
 | Persistencia real (JPA + BD) | El repositorio es un mock | los `GET` que releen el recurso |
 
 La frontera es explícita y está escrita en los skills: **si un escenario se puede comprobar
 sin levantar nada, no va aquí**. Repetir por HTTP una invariante de dominio que ya cubre un
 test unitario es coste de ejecución sin información nueva.
 
-## 2. Las cinco piezas
+## 2. Las piezas
 
 | Pieza | Dónde | Rol |
 | :---- | :---- | :-- |
 | **Ambiente** | `docker-compose.integration.yml`, `application-it.yml` | *Contra qué se prueba*: BD efímera, aislada |
-| **Colección** | `postman/bc4-integracion.postman_collection.json` | *Qué se prueba*: 23 requests, 69 aserciones |
+| **Colección** | `postman/bc4-integracion.postman_collection.json` | *Qué se prueba*: 3 flujos, 32 requests, 92 aserciones |
+| **Flujos en Java** | `src/test/java/.../integration/Flujo*IT.java` | Los flujos A y B en el lenguaje del proyecto, más los eventos de dominio |
 | **Agentes** | `.claude/agents/` | *Quién trabaja*: `integration-test-writer` escribe, `integration-test-reviewer` audita |
 | **Skills** | `.claude/skills/` | *Qué sabe*: contrato de la API y convenciones, versionados |
 | **Gate + CI** | `tools/validate-integration.*`, `.github/workflows/integration-tests.yml` | *Cómo se comprueba*: un comando, un exit code |
@@ -116,7 +117,8 @@ Su regla central es la traducción de la *regla del mutante* a este nivel:
 | Skill | Contenido |
 | :---- | :-------- |
 | `bc4-api-contract` | El contrato real de la API: 15 endpoints, DTOs de entrada con sus validaciones y mensajes, DTOs de salida con los formatos que genera el dominio (`PKG-XXXXXXXX`, el formato de impresión de la dirección), la tabla **excepción → código HTTP**, las 11 reglas de negocio observables y las máquinas de estado. Es lo que evita que el agente invente. |
-| `postman-integration-testing` | Convenciones de la colección: estructura en dos carpetas, qué variable va en qué ámbito, encadenado de ids, **repetibilidad**, qué asertar según el tipo de escenario, y cómo editar el JSON sin romperlo. Con `references/plantillas.md` (7 esqueletos copiables). |
+| `postman-integration-testing` | Convenciones de la colección: una carpeta por flujo de negocio, qué variable va en qué ámbito, encadenado de ids, **repetibilidad**, qué asertar según el tipo de escenario, y cómo editar el JSON sin romperlo. Con `references/plantillas.md` (7 esqueletos copiables). |
+| `spring-integration-testing` | Convenciones de los flujos en Java: `@SpringBootTest` + MockMvc con el perfil `it`, una clase por flujo, fechas propias por clase porque el contexto (y su H2) se comparte, relectura por `GET` y verificación de eventos con `@RecordApplicationEvents`. |
 | `integration-test-review` | Lista de rechazo en tres niveles (7 bloqueantes / 8 graves / 5 menores) y formato del dictamen. |
 
 ## 6. El gate
@@ -165,13 +167,89 @@ aparece al repetir.
 En este dominio la trampa concreta es la regla *"una sola orden de producción por fecha"*
 (`existePorFecha` → 409). La colección anterior del proyecto (`postman/` de la carpeta
 padre) usa `fechaProduccion` fija: pasa la primera vez y falla la segunda. La colección de
-integración genera la fecha en un *pre-request*, con rangos de días disjuntos por carpeta
-para que las dos no choquen entre sí.
+integración genera la fecha en un *pre-request*, con rangos de días disjuntos por flujo
+para que no choquen entre sí.
 
 El CI ejecuta el gate con `--twice`, de modo que una colección no repetible no puede
 llegar a `main`.
 
-## 8. Resultados medidos
+## 8. Proyecto Final: agrupación por flujo y flujos en Java
+
+El Proyecto Final pide que las pruebas de integración cubran **al menos dos flujos
+completos** de la aplicación, agrupadas por flujo. La colección de la Actividad 2 tenía un
+solo flujo de éxito (que lo hacía todo) y una carpeta de errores, así que se reorganizó:
+
+| Carpeta | Requests | Flujo |
+| :------ | -------: | :---- |
+| `01 - Flujo A: Produccion en cocina` | 10 | orden generada → consultada por id y por fecha → EN_PREPARACION → ítems preparados → COMPLETADA, verificando los filtros `?estado=` |
+| `02 - Flujo B: Envasado, etiquetado y entrega a BC5` | 11 | [setup] orden de 1 ítem → paquete → envasado → etiquetado → LISTO → visible en `GET /paquetes` (la consulta de BC5) → orden COMPLETADA con el paquete |
+| `03 - Flujo C: Rechazos` | 11 | la antigua carpeta de errores: 400 / 404 / 409 con su `ApiError` y sin estado a medias |
+
+Cada flujo es **autocontenido** (se lanza solo con `--folder`) y usa su propio rango de
+fechas (`1..4000`, `4001..8000`, `8001..12000` días), de modo que la colección sigue siendo
+repetible.
+
+Los flujos A y B existen también **en Java**, porque el enunciado admite las dos formas y
+cada una ve cosas que la otra no:
+
+| Clase | Tests | Qué añade frente a Postman |
+| :---- | ----: | :------------------------- |
+| `FlujoProduccionIT` | 2 | El flujo A completo + el rechazo de completar con ítems pendientes. Verifica que se publican **una vez** `OrdenGenerada` y `OrdenCompletada`, y que el rechazo **no** publica `OrdenCompletada`. |
+| `FlujoEnvasadoIT` | 2 | El flujo B completo + el rechazo de etiquetar sin envasar. Verifica que `PaqueteListo` lleva el mismo código impreso en la etiqueta y que `OrdenCompletada` referencia al paquete. |
+
+Levantan el contexto completo de Spring (`@SpringBootTest` + MockMvc, perfil `it` con H2) y
+recorren controller → servicio → JPA → BD sin mocks. Los eventos de dominio no salen por
+HTTP: desde Postman son invisibles, y aquí se capturan con `@RecordApplicationEvents`.
+
+```powershell
+cd ms-production-packaging
+.\mvnw.cmd -Pintegration verify     # unitarias + umbral + los dos flujos (failsafe)
+```
+
+**Falsabilidad comprobada:** se comentó a propósito la publicación de eventos en
+`PaqueteApplicationService.marcarListo()` y `FlujoEnvasadoIT` falló (1 de 4 tests); se
+restauró la línea y los 4 vuelven a verde. Una prueba que siguiera en verde con esa línea
+borrada no estaría verificando la entrega a BC5.
+
+### Resultados medidos (25/09/2026)
+
+```
+tools\validate-integration.ps1 -Mode local -Twice -Report
+  vuelta 1 - Requests   : 32 ejecutados, 0 fallidos
+  vuelta 1 - Aserciones : 92 ejecutadas, 0 fallidas
+  vuelta 2 - Requests   : 32 ejecutados, 0 fallidos
+  vuelta 2 - Aserciones : 92 ejecutadas, 0 fallidas
+  HTML       : docs\reportes\integracion-postman\index.html
+OK: validacion de integracion superada.
+
+mvnw -Pintegration (failsafe)
+  Tests run: 2  -- FlujoEnvasadoIT
+  Tests run: 2  -- FlujoProduccionIT
+  Tests run: 4, Failures: 0, Errors: 0, Skipped: 0     BUILD SUCCESS
+```
+
+Modo de referencia (Docker, PostgreSQL 16 real y efímero):
+
+```
+tools\validate-integration.ps1 -Twice -Report
+  Contenedores arriba: bc4-it-db (PostgreSQL efimero) + bc4-it-app
+  vuelta 1 - Aserciones : 92 ejecutadas, 0 fallidas
+  vuelta 2 - Aserciones : 92 ejecutadas, 0 fallidas
+  Bajando el ambiente Docker...
+OK: validacion de integracion superada.
+```
+
+Reportes versionados: `docs/reportes/integracion-postman/index.html` (Newman htmlextra) y
+`docs/reportes/integracion-java/` (failsafe). Todo junto: `tools\run-all-tests.ps1`.
+
+> **Corrección del gate encontrada en el camino:** en esta máquina `java` es el *shim* de
+> Oracle (`javapath\java.exe`), que lanza la JVM real como proceso hijo. `Stop-Process`
+> mataba solo el shim y la aplicación seguía ocupando el puerto 8082 tras el gate. Ahora se
+> usa `taskkill /T` para bajar el árbol completo.
+
+## 9. Resultados medidos en la Actividad 2 (histórico)
+
+> Medición con la colección original de dos carpetas, antes de la reorganización por flujo.
 
 Ejecución del gate sobre `ms-production-packaging` (10/09/2026), en los dos modos:
 
@@ -223,7 +301,7 @@ Lo que estas 69 aserciones comprueban y las 163 unitarias no podían:
 ### La verificación del propio gate
 
 El gate se comprobó saboteando la colección a propósito: se sustituyó el *pre-request* del
-request `1.1` por una `fechaProduccion` fija (`2026-07-15`) y se ejecutó con `-Twice`.
+request `1.1` (hoy `A.1`) por una `fechaProduccion` fija (`2026-07-15`) y se ejecutó con `-Twice`.
 
 ```
   vuelta 1 - Aserciones : 69 ejecutadas, 0 fallidas
@@ -241,7 +319,7 @@ Una única aserción en 409 arrastra 36 fallos, porque el resto del flujo se que
 evidencia de que el gate detecta el fallo que el resumen en verde de una sola vuelta —y una
 revisión visual de la colección— no muestran.
 
-## 9. Guardarraíles
+## 10. Guardarraíles
 
 `.claude/settings.json` añade a lo que ya había:
 
@@ -252,7 +330,7 @@ revisión visual de la colección— no muestran.
   `docker-compose.integration.yml`: el agente de pruebas no cambia el ambiente sin que se vea.
 - **`deny`** — `git push`, `rm -rf`, `mvn deploy`, `docker system prune`, leer `.env`.
 
-## 10. Cómo reproducirlo
+## 11. Cómo reproducirlo
 
 ```powershell
 # 1. Abrir Claude Code en la carpeta del repositorio (ddd_clean)
@@ -260,6 +338,7 @@ cd "D:\Repositorio Luis\nur_proy_final\ddd_clean"
 
 # 2. Validar el estado actual sin generar nada
 .\tools\validate-integration.ps1 -Mode local -Twice
+cd ms-production-packaging; .\mvnw.cmd -Pintegration verify; cd ..
 
 # 3. Generar pruebas para un escenario nuevo
 #    /test-integration listar paquetes LISTOS pendientes de transferencia
@@ -270,7 +349,7 @@ cd "D:\Repositorio Luis\nur_proy_final\ddd_clean"
 
 **Demo reproducible** del circuito, análoga a la de las unitarias:
 
-1. Cambia en la colección la `fechaProduccion` del request `1.1` por una fija (por ejemplo
+1. Cambia en la colección la `fechaProduccion` del request `A.1` por una fija (por ejemplo
    `"2026-07-15"`), quitando el script *pre-request*.
 2. Ejecuta `.\tools\validate-integration.ps1 -Mode local -Twice`: la primera vuelta pasa y
    **la segunda falla con 409**. El gate devuelve exit 1 y dice explícitamente que la

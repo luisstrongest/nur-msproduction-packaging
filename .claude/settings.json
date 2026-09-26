@@ -18,6 +18,8 @@
       "Bash(../tools/validate-contracts.sh:*)",
       "PowerShell(.\\tools\\validate-contracts.ps1:*)",
       "PowerShell(..\\tools\\validate-contracts.ps1:*)",
+      "Bash(./tools/run-all-tests.sh:*)",
+      "PowerShell(.\\tools\\run-all-tests.ps1:*)",
       "Bash(newman run:*)",
       "Bash(npx --yes --registry=https://registry.npmjs.org newman:*)",
       "Bash(docker compose -f docker-compose.integration.yml:*)",

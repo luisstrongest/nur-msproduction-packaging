@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DomainEvent.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ms-production-packaging</a> &gt; <a href="index.source.html" class="el_package">com.nurticenter.produccion.domain.event</a> &gt; <span class="el_source">DomainEvent.java</span></div><h1>DomainEvent.java</h1><pre class="source lang-java linenums">package com.nurticenter.produccion.domain.event;
+
+import java.time.LocalDateTime;
+
+/**
+ * INTERFAZ BASE - DomainEvent
+ *
+ * Contrato minimo que deben cumplir todos los eventos de dominio del BC4.
+ *
+ * Principio OCP: se pueden agregar nuevos eventos sin modificar esta interfaz.
+ * Principio ISP: la interfaz es minima; cada evento agrega sus propios datos.
+ */
+public interface DomainEvent {
+
+    /**
+     * Identificador unico del agregado que origino el evento.
+     * Permite a los consumidores correlacionar el evento con su fuente.
+     */
+    String agregadoId();
+
+    /**
+     * Momento exacto en que ocurrio el hecho en el dominio.
+     * No es el momento de publicacion al bus (eso lo agrega la infraestructura).
+     */
+    LocalDateTime occurredAt();
+
+    /**
+     * Nombre descriptivo del evento para logging y routing en el bus.
+     * Convenio: &quot;bc4.{nombreEvento}&quot; - ej. &quot;bc4.OrdenGenerada&quot;
+     */
+    default String nombreEvento() {
+<span class="fc" id="L32">        return &quot;bc4.&quot; + this.getClass().getSimpleName();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <link rel="stylesheet" type="text/css" href="../style.css">
+</head>
+<body>
+
+
+<h1>OrdenId.java</h1>
+
+<table class="src">
+
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3dd750ba_1'/>
+1
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_1'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>package com.nurticenter.produccion.domain.model.orden;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3dd750ba_2'/>
+2
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_2'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3dd750ba_3'/>
+3
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_3'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.Objects;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3dd750ba_4'/>
+4
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_4'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.UUID;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3dd750ba_5'/>
+5
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_5'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3dd750ba_6'/>
+6
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_6'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>/**</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3dd750ba_7'/>
+7
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_7'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * VALUE OBJECT - OrdenId</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3dd750ba_8'/>
+8
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_8'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * Identificador unico e inmutable de una OrdenDeProduccion.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3dd750ba_9'/>
+9
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_9'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * Wrappear UUID en un VO evita confusiones entre distintos tipos de Id en el dominio.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3dd750ba_10'/>
+10
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_10'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''> */</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3dd750ba_11'/>
+11
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_11'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>public record OrdenId(String valor) {</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3dd750ba_12'/>
+12
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_12'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3dd750ba_13'/>
+13
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_13'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    public OrdenId {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3dd750ba_14'/>
+14
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_14'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        Objects.requireNonNull(valor, &#34;OrdenId no puede ser nulo.&#34;);</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3dd750ba_15'/>
+15
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_15'>1</a>
+<span>
+
+1. &#60;init&#62; : negated conditional &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        if (valor.isBlank()) throw new IllegalArgumentException(&#34;OrdenId no puede ser vacio.&#34;);</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3dd750ba_16'/>
+16
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_16'></a>
+<span>
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3dd750ba_17'/>
+17
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_17'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3dd750ba_18'/>
+18
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_18'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    /** Factory: genera un Id nuevo aleatorio. */</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3dd750ba_19'/>
+19
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_19'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    public static OrdenId nuevo() {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3dd750ba_20'/>
+20
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_20'>1</a>
+<span>
+
+1. nuevo : replaced return value with null for com/nurticenter/produccion/domain/model/orden/OrdenId::nuevo &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        return new OrdenId(UUID.randomUUID().toString());</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3dd750ba_21'/>
+21
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_21'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3dd750ba_22'/>
+22
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_22'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3dd750ba_23'/>
+23
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_23'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    /** Factory: reconstruye desde persistencia. */</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3dd750ba_24'/>
+24
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_24'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    public static OrdenId de(String valor) {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3dd750ba_25'/>
+25
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_25'>1</a>
+<span>
+
+1. de : replaced return value with null for com/nurticenter/produccion/domain/model/orden/OrdenId::de &rarr; KILLED<br/>
+
+</span>
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        return new OrdenId(valor);</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3dd750ba_26'/>
+26
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_26'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@3dd750ba_27'/>
+27
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_27'></a>
+<span>
+</span>
+</span>
+</td>
+<td class=''><pre><span  class=''>}</span></pre></td></tr>
+
+
+
+<tr><td></td><td></td><td><h2>Mutations</h2></td></tr>
+
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@3dd750ba_15'>15</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_15'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>&#60;init&#62;<br/><b>Killed by : </b>com.nurticenter.produccion.infrastructure.persistence.orden.OrdenPersistenceAdapterTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.persistence.orden.OrdenPersistenceAdapterTest]/[method:buscarPorIdDevuelveVacioSiNoExiste()]</span></span> negated conditional &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@3dd750ba_20'>20</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_20'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>nuevo<br/><b>Killed by : </b>com.nurticenter.produccion.domain.model.IdentificadoresTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.IdentificadoresTest]/[method:generanIdentificadoresUnicos()]</span></span> replaced return value with null for com/nurticenter/produccion/domain/model/orden/OrdenId::nuevo &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@3dd750ba_25'>25</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@3dd750ba_25'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>de<br/><b>Killed by : </b>com.nurticenter.produccion.infrastructure.persistence.orden.OrdenPersistenceAdapterTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.persistence.orden.OrdenPersistenceAdapterTest]/[method:buscarPorIdDevuelveVacioSiNoExiste()]</span></span> replaced return value with null for com/nurticenter/produccion/domain/model/orden/OrdenId::de &rarr; KILLED</span>
+</div> 
+</td>
+</tr>
+
+</table>
+
+
+<h2>Active mutators</h2>
+<ul>
+
+<li class='mutator'>CONDITIONALS_BOUNDARY</li>
+
+<li class='mutator'>EMPTY_RETURNS</li>
+
+<li class='mutator'>FALSE_RETURNS</li>
+
+<li class='mutator'>INCREMENTS</li>
+
+<li class='mutator'>INVERT_NEGS</li>
+
+<li class='mutator'>MATH</li>
+
+<li class='mutator'>NEGATE_CONDITIONALS</li>
+
+<li class='mutator'>NULL_RETURNS</li>
+
+<li class='mutator'>PRIMITIVE_RETURNS</li>
+
+<li class='mutator'>TRUE_RETURNS</li>
+
+<li class='mutator'>VOID_METHOD_CALLS</li>
+
+</ul>
+
+<h2>Tests examined</h2>
+<ul>
+<li>com.nurticenter.produccion.infrastructure.persistence.orden.OrdenPersistenceAdapterTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.persistence.orden.OrdenPersistenceAdapterTest]/[method:buscarPorIdDevuelveVacioSiNoExiste()] (3 ms)</li><li>com.nurticenter.produccion.domain.model.IdentificadoresTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.IdentificadoresTest]/[method:reconstruyenDesdeUnValorExistente()] (1 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:Creacion]/[method:reconstituirNoEmiteEventos()] (1 ms)</li><li>com.nurticenter.produccion.infrastructure.persistence.orden.OrdenPersistenceAdapterTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.persistence.orden.OrdenPersistenceAdapterTest]/[method:listarPorEstadoMapeaCadaEntidad()] (4 ms)</li><li>com.nurticenter.produccion.domain.model.IdentificadoresTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.IdentificadoresTest]/[method:igualdadPorValor()] (5 ms)</li><li>com.nurticenter.produccion.infrastructure.persistence.orden.OrdenPersistenceAdapterTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.persistence.orden.OrdenPersistenceAdapterTest]/[method:guardarMapeaElAgregadoAEntidad()] (4 ms)</li><li>com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest]/[method:laRespuestaMapeaTodoElAgregado()] (6 ms)</li><li>com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest]/[method:iniciarPreparacionDelegaEnElServicio()] (6 ms)</li><li>com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest]/[nested-class:Consultas]/[method:buscarPorIdDevuelveLaOrdenDelRepositorio()] (6 ms)</li><li>com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest]/[method:listarPorEstado()] (9 ms)</li><li>com.nurticenter.produccion.infrastructure.persistence.orden.OrdenPersistenceAdapterTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.persistence.orden.OrdenPersistenceAdapterTest]/[method:idaYVueltaSinPerdidaDeDatos()] (8 ms)</li><li>com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest]/[nested-class:Consultas]/[method:buscarPorFechaDevuelveLaOrdenDelDia()] (8 ms)</li><li>com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest]/[nested-class:Transiciones]/[method:marcarItemPreparadoDelegaEnElDominioYGuarda()] (5 ms)</li><li>com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest]/[method:listarPorFechaTienePrioridad()] (11 ms)</li><li>com.nurticenter.produccion.application.paquete.PaqueteApplicationServiceTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.paquete.PaqueteApplicationServiceTest]/[nested-class:CrearPaquete]/[method:fallaSiLaOrdenNoExiste()] (10 ms)</li><li>com.nurticenter.produccion.infrastructure.persistence.orden.OrdenPersistenceAdapterTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.persistence.orden.OrdenPersistenceAdapterTest]/[method:buscarPorFechaMapeaElResultado()] (13 ms)</li><li>com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest]/[nested-class:Transiciones]/[method:iniciarPreparacionDelegaEnElDominioYGuarda()] (9 ms)</li><li>com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest]/[nested-class:Transiciones]/[method:completarPublicaElEvento()] (9 ms)</li><li>com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest]/[method:listarSinFiltrosUsaPendientePorDefecto()] (20 ms)</li><li>com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest]/[method:generarTraduceElRequestYDevuelveLaRespuesta()] (20 ms)</li><li>com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest]/[nested-class:Transiciones]/[method:unaViolacionDeInvarianteAbortaLaTransaccion()] (19 ms)</li><li>com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest]/[method:completarDelegaEnElServicio()] (23 ms)</li><li>com.nurticenter.produccion.application.paquete.PaqueteApplicationServiceTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.paquete.PaqueteApplicationServiceTest]/[nested-class:CrearPaquete]/[method:creaElPaqueteYLoVinculaALaOrden()] (20 ms)</li><li>com.nurticenter.produccion.application.orden.OrdenApplicationServiceConDoblesEnMemoriaTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.orden.OrdenApplicationServiceConDoblesEnMemoriaTest]/[method:flujoCompletoDeLaOrden()] (19 ms)</li><li>com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest]/[nested-class:Consultas]/[method:listarPorEstadoDelegaEnElRepositorio()] (42 ms)</li><li>com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.web.orden.OrdenControllerTest]/[method:marcarItemPreparadoDelegaEnElServicio()] (84 ms)</li><li>com.nurticenter.produccion.infrastructure.persistence.orden.OrdenPersistenceAdapterTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.infrastructure.persistence.orden.OrdenPersistenceAdapterTest]/[method:buscarPorIdReconstituyeElAgregado()] (236 ms)</li><li>com.nurticenter.produccion.application.orden.OrdenApplicationServiceConDoblesEnMemoriaTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.orden.OrdenApplicationServiceConDoblesEnMemoriaTest]/[method:elEstadoPersisteEntreCasosDeUso()] (404 ms)</li><li>com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest]/[nested-class:Consultas]/[method:buscarPorIdInexistenteLanzaNoSuchElement()] (2544 ms)</li><li>com.nurticenter.produccion.domain.model.IdentificadoresTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.IdentificadoresTest]/[method:generanIdentificadoresUnicos()] (1 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:Creacion]/[method:noSePuedeCrearConItemsNulos()] (2 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:Creacion]/[method:noSePuedeCrearSinItems()] (4 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:Creacion]/[method:pullEventosLimpiaLaBandeja()] (1 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:Creacion]/[method:crearRegistraEventoOrdenGenerada()] (1 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:CicloDeVida]/[method:noSePuedeIniciarLaPreparacionDosVeces()] (2 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:CicloDeVida]/[method:marcarUnItemInexistenteFalla()] (2 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:CicloDeVida]/[method:noSePuedeCompletarUnaOrdenPendiente()] (4 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:Reglas]/[method:lasColeccionesExpuestasSonInmutables()] (4 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:CicloDeVida]/[method:noSePuedeCompletarConItemsPendientes()] (2 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:Reglas]/[method:calcularTotalPorcionesSumaTodosLosItems()] (6 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:CicloDeVida]/[method:cicloDeVidaCompletoHastaCompletada()] (1 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:CicloDeVida]/[method:noSePuedeModificarUnaOrdenCompletada()] (2 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:Reglas]/[method:noSePuedenRegistrarPaquetesEnUnaOrdenCompletada()] (2 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:Creacion]/[method:elEventoLlevaLosDatosDeLaOrden()] (3 ms)</li><li>com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest]/[nested-class:GenerarOrden]/[method:normalizaLaUnidadDeMedida()] (7 ms)</li><li>com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest]/[nested-class:GenerarOrden]/[method:guardaYPublica()] (6 ms)</li><li>com.nurticenter.produccion.application.orden.OrdenApplicationServiceConDoblesEnMemoriaTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.orden.OrdenApplicationServiceConDoblesEnMemoriaTest]/[method:noSePuedeDuplicarLaOrdenDelDia()] (8 ms)</li><li>com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.orden.OrdenDeProduccionTest]/[nested-class:CicloDeVida]/[method:ordenCompletadaIncluyeLosPaquetes()] (15 ms)</li><li>com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.application.orden.OrdenApplicationServiceTest]/[nested-class:GenerarOrden]/[method:traduceElItemDelCalendario()] (23 ms)</li><li>com.nurticenter.produccion.domain.model.IdentificadoresTest.[engine:junit-jupiter]/[class:com.nurticenter.produccion.domain.model.IdentificadoresTest]/[method:rechazanValorVacio()] (2 ms)</li>
+</ul>
+
+<br/>
+
+Report generated by <a href='https://pitest.org'>PIT</a> 1.30.0 <a href='https://github.com/sponsors/hcoles'>support</a>
+
+</body>
+</html>

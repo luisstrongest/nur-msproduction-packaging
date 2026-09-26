@@ -22,7 +22,8 @@ Prohibido en `*Test.java`:
 - cualquier cosa que tarde mas de ~100 ms por test
 
 Todo eso pertenece a `*IT.java` (pruebas de integracion), que estan **excluidas** de
-`mvn test` por configuracion de surefire. No las escribas salvo peticion explicita.
+`mvn test` por configuracion de surefire. No las escribas salvo peticion explicita; si
+te la piden, sus reglas estan en el skill `spring-integration-testing`.
 
 ## 2. La regla del doble por capa
 

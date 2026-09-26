@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PacienteId.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ms-production-packaging</a> &gt; <a href="index.source.html" class="el_package">com.nurticenter.produccion.domain.model.paquete</a> &gt; <span class="el_source">PacienteId.java</span></div><h1>PacienteId.java</h1><pre class="source lang-java linenums">package com.nurticenter.produccion.domain.model.paquete;
+
+import java.util.Objects;
+
+/**
+ * VALUE OBJECT - PacienteId
+ *
+ * Referencia opaca al Paciente que vive en BC1.
+ * BC4 solo necesita este Id para:
+ *   1. Vincularlo al PaqueteEtiquetado.
+ *   2. Incluirlo en el evento PaqueteListo para que BC5 pueda rastrearlo.
+ *
+ * BC4 NUNCA consulta BC1 para obtener datos del paciente.
+ * Los datos necesarios (nombre, direccion) llegan desnormalizados
+ * en el evento CalendarioConsolidado -&gt; DatosPaciente.
+ */
+public record PacienteId(String valor) {
+
+<span class="fc" id="L19">    public PacienteId {</span>
+<span class="fc" id="L20">        Objects.requireNonNull(valor, &quot;PacienteId no puede ser nulo.&quot;);</span>
+<span class="fc bfc" id="L21" title="All 2 branches covered.">        if (valor.isBlank()) throw new IllegalArgumentException(&quot;PacienteId no puede ser vacio.&quot;);</span>
+<span class="fc" id="L22">    }</span>
+
+    public static PacienteId de(String valor) {
+<span class="fc" id="L25">        return new PacienteId(valor);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

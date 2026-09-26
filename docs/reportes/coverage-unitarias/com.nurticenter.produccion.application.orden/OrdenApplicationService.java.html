@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrdenApplicationService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ms-production-packaging</a> &gt; <a href="index.source.html" class="el_package">com.nurticenter.produccion.application.orden</a> &gt; <span class="el_source">OrdenApplicationService.java</span></div><h1>OrdenApplicationService.java</h1><pre class="source lang-java linenums">package com.nurticenter.produccion.application.orden;
+
+import com.nurticenter.produccion.application.event.EventPublisher;
+import com.nurticenter.produccion.application.orden.dto.GenerarOrdenCommand;
+import com.nurticenter.produccion.domain.model.orden.EstadoOrden;
+import com.nurticenter.produccion.domain.model.orden.ItemOrden;
+import com.nurticenter.produccion.domain.model.orden.OrdenDeProduccion;
+import com.nurticenter.produccion.domain.model.orden.OrdenId;
+import com.nurticenter.produccion.domain.repository.OrdenDeProduccionRepository;
+import com.nurticenter.produccion.domain.shared.Porcion;
+import com.nurticenter.produccion.domain.shared.UnidadMedida;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.NoSuchElementException;
+
+/**
+ * SERVICIO DE APLICACION - Orden de Produccion
+ *
+ * Orquesta los casos de uso del agregado OrdenDeProduccion:
+ *   - Generar la orden desde el CalendarioConsolidado (ACL Receta -&gt; ItemOrden)
+ *   - Iniciar la preparacion
+ *   - Marcar items preparados
+ *   - Completar la orden
+ *   - Consultas
+ *
+ * Responsabilidades de esta capa (NO del dominio):
+ *   - Coordinar repositorio (carga/guardado) y transacciones
+ *   - Publicar los eventos que el agregado acumula
+ *   - Traducir DTOs de aplicacion a objetos de dominio (ACL)
+ */
+@Service
+public class OrdenApplicationService {
+
+    private final OrdenDeProduccionRepository ordenRepository;
+    private final EventPublisher eventPublisher;
+
+    public OrdenApplicationService(OrdenDeProduccionRepository ordenRepository,
+<span class="fc" id="L41">                                   EventPublisher eventPublisher) {</span>
+<span class="fc" id="L42">        this.ordenRepository = ordenRepository;</span>
+<span class="fc" id="L43">        this.eventPublisher = eventPublisher;</span>
+<span class="fc" id="L44">    }</span>
+
+    // -- Casos de uso de escritura --------------------------------------------------
+
+    /**
+     * Genera una OrdenDeProduccion a partir del CalendarioConsolidado.
+     * Regla: existe a lo sumo una orden por fecha de produccion.
+     */
+    @Transactional
+    public OrdenDeProduccion generarOrden(GenerarOrdenCommand comando) {
+<span class="fc bfc" id="L54" title="All 2 branches covered.">        if (ordenRepository.existePorFecha(comando.fechaProduccion())) {</span>
+<span class="fc" id="L55">            throw new IllegalStateException(</span>
+<span class="fc" id="L56">                    &quot;Ya existe una orden de produccion para la fecha &quot; + comando.fechaProduccion());</span>
+        }
+
+<span class="fc" id="L59">        List&lt;ItemOrden&gt; items = comando.items().stream()</span>
+<span class="fc" id="L60">                .map(this::traducirItem)   // ACL: item del calendario -&gt; ItemOrden de dominio</span>
+<span class="fc" id="L61">                .toList();</span>
+
+<span class="fc" id="L63">        OrdenDeProduccion orden = OrdenDeProduccion.crear(comando.fechaProduccion(), items);</span>
+<span class="fc" id="L64">        ordenRepository.guardar(orden);</span>
+<span class="fc" id="L65">        eventPublisher.publicar(orden.pullEventos());</span>
+<span class="fc" id="L66">        return orden;</span>
+    }
+
+    /** Transicion PENDIENTE -&gt; EN_PREPARACION. */
+    @Transactional
+    public OrdenDeProduccion iniciarPreparacion(String ordenId) {
+<span class="fc" id="L72">        OrdenDeProduccion orden = cargar(ordenId);</span>
+<span class="fc" id="L73">        orden.iniciarPreparacion();</span>
+<span class="fc" id="L74">        ordenRepository.guardar(orden);</span>
+<span class="fc" id="L75">        eventPublisher.publicar(orden.pullEventos());</span>
+<span class="fc" id="L76">        return orden;</span>
+    }
+
+    /** Marca un item (por recetaId) como PREPARADO. */
+    @Transactional
+    public OrdenDeProduccion marcarItemPreparado(String ordenId, String recetaId) {
+<span class="fc" id="L82">        OrdenDeProduccion orden = cargar(ordenId);</span>
+<span class="fc" id="L83">        orden.marcarItemPreparado(recetaId);</span>
+<span class="fc" id="L84">        ordenRepository.guardar(orden);</span>
+<span class="fc" id="L85">        eventPublisher.publicar(orden.pullEventos());</span>
+<span class="fc" id="L86">        return orden;</span>
+    }
+
+    /** Transicion EN_PREPARACION -&gt; COMPLETADA (requiere todos los items preparados). */
+    @Transactional
+    public OrdenDeProduccion completarOrden(String ordenId) {
+<span class="fc" id="L92">        OrdenDeProduccion orden = cargar(ordenId);</span>
+<span class="fc" id="L93">        orden.completar();</span>
+<span class="fc" id="L94">        ordenRepository.guardar(orden);</span>
+<span class="fc" id="L95">        eventPublisher.publicar(orden.pullEventos());</span>
+<span class="fc" id="L96">        return orden;</span>
+    }
+
+    // -- Consultas ------------------------------------------------------------------
+
+    @Transactional(readOnly = true)
+    public OrdenDeProduccion buscarPorId(String ordenId) {
+<span class="fc" id="L103">        return cargar(ordenId);</span>
+    }
+
+    @Transactional(readOnly = true)
+    public List&lt;OrdenDeProduccion&gt; listarPorEstado(EstadoOrden estado) {
+<span class="fc" id="L108">        return ordenRepository.listarPorEstado(estado);</span>
+    }
+
+    @Transactional(readOnly = true)
+    public OrdenDeProduccion buscarPorFecha(LocalDate fecha) {
+<span class="fc" id="L113">        return ordenRepository.buscarPorFecha(fecha)</span>
+<span class="fc" id="L114">                .orElseThrow(() -&gt; new NoSuchElementException(</span>
+                        &quot;No existe orden de produccion para la fecha &quot; + fecha));
+    }
+
+    // -- Helpers --------------------------------------------------------------------
+
+    private OrdenDeProduccion cargar(String ordenId) {
+<span class="fc" id="L121">        return ordenRepository.buscarPorId(OrdenId.de(ordenId))</span>
+<span class="fc" id="L122">                .orElseThrow(() -&gt; new NoSuchElementException(</span>
+                        &quot;No existe una OrdenDeProduccion con id &quot; + ordenId));
+    }
+
+    /**
+     * ACL: traduce un item del CalendarioConsolidado a un ItemOrden del dominio.
+     * cantidadTotal = numero de pacientes que reciben la receta ese dia.
+     */
+    private ItemOrden traducirItem(GenerarOrdenCommand.ItemCommand item) {
+<span class="fc" id="L131">        UnidadMedida unidad = UnidadMedida.valueOf(item.unidadMedida().trim().toUpperCase());</span>
+<span class="fc" id="L132">        Porcion porcion = new Porcion(item.cantidadPorcion(), unidad, item.descripcionPorcion());</span>
+<span class="fc" id="L133">        return new ItemOrden(item.recetaId(), item.nombreReceta(), item.numeroPacientes(), porcion);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

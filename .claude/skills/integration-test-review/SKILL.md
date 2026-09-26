@@ -87,13 +87,13 @@ La revision manual no basta: hay dos comprobaciones que se ejecutan y dan un si 
 Las dos tienen que dar exit 0. Si la segunda falla, es un hallazgo bloqueante confirmado,
 no una opinion.
 
-**Aislamiento por carpeta** — cada carpeta debe pasar sola:
+**Aislamiento por flujo** — cada carpeta (flujo) debe pasar sola:
 
 ```bash
 npx --yes --registry=https://registry.npmjs.org newman run \
     postman/bc4-integracion.postman_collection.json \
     -e postman/local.postman_environment.json \
-    --folder "02 - Flujo incorrecto"
+    --folder "03 - Flujo C: Rechazos (errores esperados)"
 ```
 
 El equivalente del mutation testing de las pruebas unitarias es, aqui, **preguntarse que

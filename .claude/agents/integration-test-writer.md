@@ -37,13 +37,16 @@ Carga los dos skills, en este orden:
 
    Si el escenario existe, **amplias sus aserciones**; no duplicas el request.
 
-3. **Decide la carpeta**: `01 - Flujo correcto` si es parte del camino feliz encadenado;
-   `02 - Flujo incorrecto` si es un rechazo esperado. Un caso de error **nunca** se cuela
-   en medio del flujo correcto: romperia el encadenado de los requests siguientes.
+3. **Decide el flujo**: la coleccion se agrupa por flujo de negocio. `01 - Flujo A`
+   (produccion en cocina) o `02 - Flujo B` (envasado y entrega a BC5) si es parte de ese
+   camino feliz encadenado; `03 - Flujo C: Rechazos` si es un rechazo esperado; una
+   carpeta `0N - Flujo X` nueva si recorre otra parte del dominio. Un caso de error
+   **nunca** se cuela en medio de un flujo de exito: romperia el encadenado de los
+   requests siguientes.
 
 4. **Resuelve el estado previo dentro de tu propia carpeta.** Si tu escenario necesita
    una orden EN_PREPARACION o un paquete sin envasar, añade los requests `[setup]` que lo
-   construyan. Nunca dependas de que se haya ejecutado la otra carpeta.
+   construyan. Nunca dependas de que se haya ejecutado otro flujo.
 
 5. **Escribe el request** siguiendo las plantillas del skill. Recuerda que el JSON de la
    coleccion se edita a mano: los scripts van en `exec` como **array de lineas**, y una

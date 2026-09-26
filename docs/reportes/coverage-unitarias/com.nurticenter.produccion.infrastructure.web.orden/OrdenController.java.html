@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrdenController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ms-production-packaging</a> &gt; <a href="index.source.html" class="el_package">com.nurticenter.produccion.infrastructure.web.orden</a> &gt; <span class="el_source">OrdenController.java</span></div><h1>OrdenController.java</h1><pre class="source lang-java linenums">package com.nurticenter.produccion.infrastructure.web.orden;
+
+import com.nurticenter.produccion.application.orden.OrdenApplicationService;
+import com.nurticenter.produccion.domain.model.orden.EstadoOrden;
+import com.nurticenter.produccion.domain.model.orden.OrdenDeProduccion;
+import com.nurticenter.produccion.infrastructure.web.orden.dto.GenerarOrdenRequest;
+import com.nurticenter.produccion.infrastructure.web.orden.dto.OrdenResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.time.LocalDate;
+import java.util.List;
+
+/**
+ * Controller REST del agregado OrdenDeProduccion.
+ */
+@RestController
+@RequestMapping(&quot;/api/v1/ordenes&quot;)
+@Tag(name = &quot;Ordenes de Produccion&quot;,
+        description = &quot;Ciclo de vida de la orden: PENDIENTE -&gt; EN_PREPARACION -&gt; COMPLETADA&quot;)
+public class OrdenController {
+
+    private final OrdenApplicationService servicio;
+
+<span class="fc" id="L35">    public OrdenController(OrdenApplicationService servicio) {</span>
+<span class="fc" id="L36">        this.servicio = servicio;</span>
+<span class="fc" id="L37">    }</span>
+
+    @Operation(summary = &quot;Generar una orden de produccion (desde el CalendarioConsolidado)&quot;)
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public OrdenResponse generar(@Valid @RequestBody GenerarOrdenRequest request) {
+<span class="fc" id="L43">        OrdenDeProduccion orden = servicio.generarOrden(request.aComando());</span>
+<span class="fc" id="L44">        return OrdenResponse.desde(orden);</span>
+    }
+
+    @Operation(summary = &quot;Consultar una orden por id&quot;)
+    @GetMapping(&quot;/{id}&quot;)
+    public OrdenResponse buscar(@PathVariable String id) {
+<span class="fc" id="L50">        return OrdenResponse.desde(servicio.buscarPorId(id));</span>
+    }
+
+    @Operation(summary = &quot;Listar ordenes por estado, o buscar la orden de una fecha&quot;)
+    @GetMapping
+    public List&lt;OrdenResponse&gt; listar(
+            @RequestParam(required = false) EstadoOrden estado,
+            @RequestParam(required = false) LocalDate fecha) {
+<span class="fc bfc" id="L58" title="All 2 branches covered.">        if (fecha != null) {</span>
+<span class="fc" id="L59">            return List.of(OrdenResponse.desde(servicio.buscarPorFecha(fecha)));</span>
+        }
+<span class="fc bfc" id="L61" title="All 2 branches covered.">        EstadoOrden filtro = (estado != null) ? estado : EstadoOrden.PENDIENTE;</span>
+<span class="fc" id="L62">        return servicio.listarPorEstado(filtro).stream()</span>
+<span class="fc" id="L63">                .map(OrdenResponse::desde)</span>
+<span class="fc" id="L64">                .toList();</span>
+    }
+
+    @Operation(summary = &quot;Iniciar la preparacion (PENDIENTE -&gt; EN_PREPARACION)&quot;)
+    @PostMapping(&quot;/{id}/iniciar-preparacion&quot;)
+    public OrdenResponse iniciarPreparacion(@PathVariable String id) {
+<span class="fc" id="L70">        return OrdenResponse.desde(servicio.iniciarPreparacion(id));</span>
+    }
+
+    @Operation(summary = &quot;Marcar un item como preparado&quot;)
+    @PostMapping(&quot;/{id}/items/{recetaId}/preparar&quot;)
+    public OrdenResponse marcarItemPreparado(@PathVariable String id, @PathVariable String recetaId) {
+<span class="fc" id="L76">        return OrdenResponse.desde(servicio.marcarItemPreparado(id, recetaId));</span>
+    }
+
+    @Operation(summary = &quot;Completar la orden (EN_PREPARACION -&gt; COMPLETADA)&quot;)
+    @PostMapping(&quot;/{id}/completar&quot;)
+    public OrdenResponse completar(@PathVariable String id) {
+<span class="fc" id="L82">        return OrdenResponse.desde(servicio.completarOrden(id));</span>
+    }
+
+    /** Permite pasar el estado como texto (case-insensitive) en el query param. */
+    @org.springframework.web.bind.annotation.InitBinder
+    public void initBinder(org.springframework.web.bind.WebDataBinder binder) {
+<span class="fc" id="L88">        binder.registerCustomEditor(EstadoOrden.class,</span>
+<span class="fc" id="L89">                new java.beans.PropertyEditorSupport() {</span>
+                    @Override
+                    public void setAsText(String text) {
+<span class="fc" id="L92">                        setValue(EstadoOrden.valueOf(text.trim().toUpperCase()));</span>
+<span class="fc" id="L93">                    }</span>
+                });
+<span class="fc" id="L95">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

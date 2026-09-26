@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PaqueteJpaEntity.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ms-production-packaging</a> &gt; <a href="index.source.html" class="el_package">com.nurticenter.produccion.infrastructure.persistence.paquete</a> &gt; <span class="el_source">PaqueteJpaEntity.java</span></div><h1>PaqueteJpaEntity.java</h1><pre class="source lang-java linenums">package com.nurticenter.produccion.infrastructure.persistence.paquete;
+
+import com.nurticenter.produccion.domain.model.paquete.EstadoPaquete;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
+
+import java.time.LocalDateTime;
+
+/**
+ * ENTIDAD JPA - PaqueteEtiquetado
+ *
+ * Los campos de la Etiqueta son nullable: solo se completan cuando el paquete
+ * alcanza el estado ETIQUETADO. Hibernate genera la tabla desde esta clase.
+ */
+@Entity
+@Table(name = &quot;paquete_etiquetado&quot;, indexes = {
+        @Index(name = &quot;idx_paquete_orden&quot;, columnList = &quot;orden_id&quot;),
+        @Index(name = &quot;idx_paquete_paciente&quot;, columnList = &quot;paciente_id&quot;),
+        @Index(name = &quot;idx_paquete_codigo&quot;, columnList = &quot;codigo_valor&quot;, unique = true)
+})
+public class PaqueteJpaEntity {
+
+    @Id
+    @Column(name = &quot;id&quot;, nullable = false, updatable = false)
+    private String id;
+
+    @Column(name = &quot;paciente_id&quot;, nullable = false)
+    private String pacienteId;
+
+    @Column(name = &quot;orden_id&quot;, nullable = false)
+    private String ordenId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = &quot;estado&quot;, nullable = false)
+    private EstadoPaquete estado;
+
+    // -- Etiqueta (nullable hasta el estado ETIQUETADO) --
+    @Column(name = &quot;etiqueta_nombre_paciente&quot;)
+    private String etiquetaNombrePaciente;
+
+    @Column(name = &quot;etiqueta_calle&quot;)
+    private String etiquetaCalle;
+
+    @Column(name = &quot;etiqueta_numero&quot;)
+    private String etiquetaNumero;
+
+    @Column(name = &quot;etiqueta_referencia&quot;)
+    private String etiquetaReferencia;
+
+    @Column(name = &quot;etiqueta_ciudad&quot;)
+    private String etiquetaCiudad;
+
+    @Column(name = &quot;codigo_valor&quot;)
+    private String codigoValor;
+
+    @Column(name = &quot;codigo_generado_en&quot;)
+    private LocalDateTime codigoGeneradoEn;
+
+    @Column(name = &quot;etiqueta_fecha_generacion&quot;)
+    private LocalDateTime etiquetaFechaGeneracion;
+
+<span class="nc" id="L67">    protected PaqueteJpaEntity() {</span>
+        // requerido por JPA
+<span class="nc" id="L69">    }</span>
+
+<span class="fc" id="L71">    public PaqueteJpaEntity(String id, String pacienteId, String ordenId, EstadoPaquete estado) {</span>
+<span class="fc" id="L72">        this.id = id;</span>
+<span class="fc" id="L73">        this.pacienteId = pacienteId;</span>
+<span class="fc" id="L74">        this.ordenId = ordenId;</span>
+<span class="fc" id="L75">        this.estado = estado;</span>
+<span class="fc" id="L76">    }</span>
+
+    public void asignarEtiqueta(String nombrePaciente, String calle, String numero, String referencia,
+                                String ciudad, String codigoValor, LocalDateTime codigoGeneradoEn,
+                                LocalDateTime etiquetaFechaGeneracion) {
+<span class="fc" id="L81">        this.etiquetaNombrePaciente = nombrePaciente;</span>
+<span class="fc" id="L82">        this.etiquetaCalle = calle;</span>
+<span class="fc" id="L83">        this.etiquetaNumero = numero;</span>
+<span class="fc" id="L84">        this.etiquetaReferencia = referencia;</span>
+<span class="fc" id="L85">        this.etiquetaCiudad = ciudad;</span>
+<span class="fc" id="L86">        this.codigoValor = codigoValor;</span>
+<span class="fc" id="L87">        this.codigoGeneradoEn = codigoGeneradoEn;</span>
+<span class="fc" id="L88">        this.etiquetaFechaGeneracion = etiquetaFechaGeneracion;</span>
+<span class="fc" id="L89">    }</span>
+
+    public boolean tieneEtiqueta() {
+<span class="fc bfc" id="L92" title="All 2 branches covered.">        return codigoValor != null;</span>
+    }
+
+<span class="fc" id="L95">    public String getId()                          { return id; }</span>
+<span class="fc" id="L96">    public String getPacienteId()                  { return pacienteId; }</span>
+<span class="fc" id="L97">    public String getOrdenId()                     { return ordenId; }</span>
+<span class="fc" id="L98">    public EstadoPaquete getEstado()               { return estado; }</span>
+<span class="fc" id="L99">    public String getEtiquetaNombrePaciente()      { return etiquetaNombrePaciente; }</span>
+<span class="fc" id="L100">    public String getEtiquetaCalle()               { return etiquetaCalle; }</span>
+<span class="fc" id="L101">    public String getEtiquetaNumero()              { return etiquetaNumero; }</span>
+<span class="fc" id="L102">    public String getEtiquetaReferencia()          { return etiquetaReferencia; }</span>
+<span class="fc" id="L103">    public String getEtiquetaCiudad()              { return etiquetaCiudad; }</span>
+<span class="fc" id="L104">    public String getCodigoValor()                 { return codigoValor; }</span>
+<span class="fc" id="L105">    public LocalDateTime getCodigoGeneradoEn()     { return codigoGeneradoEn; }</span>
+<span class="fc" id="L106">    public LocalDateTime getEtiquetaFechaGeneracion() { return etiquetaFechaGeneracion; }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

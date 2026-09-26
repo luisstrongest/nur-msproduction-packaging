@@ -103,3 +103,36 @@ jobs:
           path: ms-production-packaging/target/newman/
           if-no-files-found: warn
           retention-days: 14
+
+  # Los mismos flujos A y B en Java (FlujoProduccionIT, FlujoEnvasadoIT): contexto completo
+  # de Spring con H2, y ademas verifican los eventos de dominio publicados.
+  flujos-java:
+    name: Pruebas de integracion (flujos en Java)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ms-production-packaging
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Flujos de integracion (failsafe, perfil 'integration')
+        run: |
+          chmod +x mvnw
+          ./mvnw -B -Pintegration test-compile failsafe:integration-test failsafe:verify
+
+      - name: Publicar reportes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reportes-integracion-java
+          path: ms-production-packaging/target/failsafe-reports/
+          if-no-files-found: warn
+          retention-days: 14

@@ -58,10 +58,10 @@ Carga:
 
    ```bash
    npx --yes --registry=https://registry.npmjs.org newman run postman/bc4-integracion.postman_collection.json \
-       -e postman/local.postman_environment.json --folder "02 - Flujo incorrecto"
+       -e postman/local.postman_environment.json --folder "03 - Flujo C: Rechazos (errores esperados)"
    ```
 
-   Si falla aislada, depende del flujo correcto: hallazgo grave.
+   Si falla aislada, depende de otro flujo: hallazgo grave. Repite con `--folder "02 - Flujo B: Envasado, etiquetado y entrega a BC5"`.
 
 6. **Verifica que los requests realmente se ejecutan**: un request sin bloque `test`, o
    con el script vacio, aparece como ejecutado en el resumen y no comprueba nada. Es el

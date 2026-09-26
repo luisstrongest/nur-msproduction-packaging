@@ -15,6 +15,102 @@ Gestiona la generación de órdenes de trabajo a partir del `CalendarioConsolida
 - Registra el envasado y genera el `PaqueteEtiquetado` por paciente.
 - Emite los eventos de dominio: `OrdenGenerada`, `OrdenCompletada`, `PaqueteListo`.
 
+## Diseño estratégico — Context Map
+
+BC4 está en el medio de la cadena de valor: **aguas abajo** del calendario (BC3), del que
+recibe qué cocinar y para quién, y **aguas arriba** de la logística (BC5), a la que entrega
+los paquetes listos. Con BC1 y BC2 no tiene ninguna dependencia en tiempo de ejecución: solo
+guarda sus identificadores como referencias opacas.
+
+```mermaid
+flowchart LR
+    subgraph grupo["Microservicios del grupo"]
+        direction LR
+        BC3["<b>BC3 · Suscripción y calendario</b><br/>ms-catering-subscription<br/><i>Alvaro Molina</i>"]
+        BC4["<b>BC4 · Producción y Envasado</b><br/>ms-production-packaging<br/><i>Luis Hurtado</i> · Supporting Domain"]
+        BC5["<b>BC5 · Entrega y Logística</b><br/>ms-logistic-delivery<br/><i>Carlos Cuellar</i>"]
+    end
+
+    BC1["<b>BC1 · Pacientes</b>"]
+    BC2["<b>BC2 · Planes y recetas</b>"]
+
+    BC3 -- "<b>U → D</b> · CalendarioConsolidado<br/>Published Language<br/>BC4 traduce con <b>ACL</b>" --> BC4
+    BC4 -- "<b>U → D</b> · Open Host Service<br/>REST /api/v1/paquetes<br/>+ eventos PaqueteListo / OrdenCompletada<br/>Customer–Supplier verificado con <b>Pact</b>" --> BC5
+
+    BC1 -. "PacienteId opaco<br/>sin llamadas" .-> BC4
+    BC2 -. "recetaId opaco<br/>+ nombre desnormalizado" .-> BC4
+    BC1 -. "datos del paciente<br/>y dirección" .-> BC3
+    BC2 -. "recetas del plan" .-> BC3
+
+    classDef propio fill:#1f6feb,stroke:#0b3d91,color:#fff
+    classDef grupoMs fill:#d0e4ff,stroke:#1f6feb,color:#0b1f44
+    classDef externo fill:#eeeeee,stroke:#999,color:#333,stroke-dasharray: 5 3
+    class BC4 propio
+    class BC3,BC5 grupoMs
+    class BC1,BC2 externo
+```
+
+| Relación | Patrón DDD | Qué significa en el código |
+| :------- | :--------- | :------------------------- |
+| BC3 → BC4 | *Upstream / Downstream* + **Anti-Corruption Layer** | El calendario llega con el lenguaje de BC3; `OrdenApplicationService.traducirItem()` lo traduce a `ItemOrden` y `Porcion`. El dominio de BC4 nunca ve un objeto de BC3. |
+| BC4 → BC5 | **Open Host Service** + **Published Language** · *Customer–Supplier* | BC4 expone `GET /api/v1/paquetes` y publica `PaqueteListo` y `OrdenCompletada`. BC5 (el cliente) fija lo que necesita en un pacto, y BC4 lo verifica en `PaquetesProviderContractIT`. |
+| BC1 ⇢ BC4 | Referencia por identidad | `PacienteId` es un VO opaco. El nombre y la dirección llegan **desnormalizados** desde BC3: si BC1 cae, la cocina sigue produciendo. |
+| BC2 ⇢ BC4 | Referencia por identidad | `ItemOrden` guarda `recetaId` y una copia de `nombreReceta`; BC4 nunca consulta el catálogo. |
+
+> BC1 y BC2 (en gris) forman parte del modelo del proyecto, pero ningún integrante del grupo
+> los implementó como microservicio. Las líneas punteadas son dependencias de datos, no llamadas.
+
+### Cómo se origina y avanza el flujo a partir de una orden de producción
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant BC3 as BC3 · Suscripción
+    participant API as BC4 · API REST
+    participant ORD as OrdenDeProduccion
+    participant PAQ as PaqueteEtiquetado
+    participant BC5 as BC5 · Logística
+
+    BC3->>API: CalendarioConsolidado del día<br/>POST /api/v1/ordenes
+    API->>ORD: ACL traducirItem() → crear(fecha, items)
+    Note over ORD: PENDIENTE · cantidad = porción × nº pacientes<br/>publica OrdenGenerada (notificaciones, auditoría)
+
+    API->>ORD: iniciar-preparacion
+    Note over ORD: EN_PREPARACION
+    API->>ORD: items/{recetaId}/preparar (uno por receta)
+
+    loop por cada paciente del calendario
+        API->>PAQ: POST /api/v1/paquetes (pacienteId, ordenId)
+        Note over PAQ: ENVASADO_PENDIENTE
+        API->>ORD: registrarPaqueteGenerado(paqueteId)<br/>(la orden guarda solo el id)
+        API->>PAQ: envasar
+        Note over PAQ: ENVASADO
+        API->>PAQ: etiquetar(DatosPaciente)
+        Note over PAQ: ETIQUETADO · Etiqueta con DireccionImpresa y código PKG-XXXXXXXX
+        API->>PAQ: marcar-listo
+        Note over PAQ: LISTO
+        PAQ-->>BC5: evento PaqueteListo (paqueteId, pacienteId, código)
+    end
+
+    API->>ORD: completar
+    Note over ORD: COMPLETADA · exige todos los ítems PREPARADO
+    ORD-->>BC5: evento OrdenCompletada (paqueteIds)
+    BC5->>API: GET /api/v1/paquetes → paquetes LISTOS para asignar a rutas
+```
+
+La **orden de producción** es el agregado raíz que origina todo: se crea a partir del
+calendario, la cocina la avanza ítem por ítem, y cada paquete que se genera queda
+**referenciado por su id** en la orden (nunca como objeto: son dos agregados con ciclos de
+vida propios). El paquete se crea *antes* de completar la orden, porque una orden
+`COMPLETADA` es inmutable. Este recorrido es el que prueban los flujos de integración A y B
+(ver [Pruebas de integración](#pruebas-de-integración)).
+
+> **Estado de la implementación.** BC3 entrega el calendario a BC4 llamando a
+> `POST /api/v1/ordenes`, y BC5 recoge los paquetes por REST (el contrato Pact). Los eventos de
+> dominio se publican hoy en el bus interno de Spring (`SpringEventPublisher`); llevarlos a
+> BC5 por RabbitMQ, que BC5 ya tiene levantado, es cambiar solo ese adaptador de
+> infraestructura, sin tocar el dominio.
+
 ## Diagrama de clases — Diseño táctico DDD
 
 ```mermaid
@@ -305,49 +401,65 @@ Documentación completa del dominio: [`.agents/bc4-domain-docs`](../../.agents/b
 
 ## Build y pruebas
 
+> **Proyecto Final — capa de testing completa.** Un solo comando ejecuta todos los niveles
+> y deja los reportes entregables en [`docs/reportes/`](docs/reportes):
+>
+> ```powershell
+> .\tools\run-all-tests.ps1          # unitarias + integración (Java y Postman) + contrato
+> ```
+>
+> Mapa requisito → evidencia y cómo ejecutarlo: [`docs/proyecto-final-testing.md`](docs/proyecto-final-testing.md).
+> Reglas de proyecto usadas para generar los tests con IA: [`CLAUDE.md`](CLAUDE.md).
+
 ```bash
 cd ms-production-packaging
 
-./mvnw test      # 162 pruebas unitarias + reporte de cobertura JaCoCo
-./mvnw verify    # además valida el umbral mínimo de cobertura (85 % líneas)
+./mvnw test                  # 163 pruebas unitarias + reporte de cobertura JaCoCo
+./mvnw verify                # además valida el umbral mínimo (85 % líneas / 80 % ramas)
+./mvnw -Pintegration verify  # además, los flujos de integración en Java
 ```
 
-Reporte de cobertura: `target/site/jacoco/index.html` (requiere JDK 21).
+Reporte de cobertura: `target/site/jacoco/index.html` (requiere JDK 21). Copia versionada:
+[`docs/reportes/coverage-unitarias/index.html`](docs/reportes/coverage-unitarias/index.html).
 
-**162 pruebas unitarias** cubren las tres capas, sin levantar Spring ni base de datos:
+**163 pruebas unitarias** cubren las tres capas, sin levantar Spring ni base de datos:
 
 | Capa | Enfoque | Cobertura de líneas |
 | :--- | :------ | ------------------: |
-| Dominio | Java puro, sin dobles: invariantes, transiciones de estado y eventos | 99.3 % |
+| Dominio | Java puro, sin dobles: invariantes, transiciones de estado y eventos | 99.2 % |
 | Aplicación | **Mocks de Mockito** de los puertos (`OrdenDeProduccionRepository`, `PaqueteEtiquetadoRepository`, `EventPublisher`) para verificar la orquestación; además un **fake** en memoria para el flujo completo | 100 % |
-| Infraestructura | **Mocks** de Spring Data JPA, del `ApplicationEventPublisher` y de los servicios de aplicación (adaptadores, mappers, controllers, manejo de errores) | 97.9 % |
+| Infraestructura | **Mocks** de Spring Data JPA, del `ApplicationEventPublisher` y de los servicios de aplicación (adaptadores, mappers, controllers, manejo de errores) | 97.8 % |
 
-Cobertura global: **98.8 % de líneas / 99.1 % de ramas**.
+Cobertura global: **98.7 % de líneas / 99.1 % de ramas** (mínimo exigido: 80 %).
 
 Detalle de la estrategia, herramientas y mapa de pruebas: [`docs/pruebas-unitarias.md`](docs/pruebas-unitarias.md).
 
 ### Pruebas de integración
 
 Las pruebas de integración no viven en `mvn test` (surefire excluye `*IT.java` a
-propósito): se ejecutan contra el microservicio **realmente levantado**, como una colección
-de Postman.
+propósito). Están **agrupadas por flujo de negocio** y existen en dos formas: una colección
+de Postman contra el microservicio **realmente levantado**, y los mismos flujos en Java.
+
+| Flujo | Postman | Java | Qué recorre |
+| :---- | :------ | :--- | :---------- |
+| **A — Producción en cocina** | `01 - Flujo A` (10 requests) | `FlujoProduccionIT` | orden generada → consultada por id y fecha → EN_PREPARACION → ítems preparados → COMPLETADA |
+| **B — Envasado y entrega a BC5** | `02 - Flujo B` (11 requests) | `FlujoEnvasadoIT` | paquete → envasado → etiquetado → LISTO → visible para Logística → orden completada con el paquete |
+| **C — Rechazos** | `03 - Flujo C` (11 requests) | un test de rechazo en cada clase | 400 / 404 / 409 con su `ApiError`, sin dejar estado a medias |
 
 ```powershell
 # desde la raíz del repositorio (ddd_clean)
-.\tools\validate-integration.ps1                 # Docker + PostgreSQL real efímero
-.\tools\validate-integration.ps1 -Mode local     # H2 en memoria, sin Docker
+.\tools\validate-integration.ps1                          # Docker + PostgreSQL real efímero
+.\tools\validate-integration.ps1 -Mode local -Twice -Report   # H2, dos vueltas, reporte HTML
+
+cd ms-production-packaging; .\mvnw.cmd -Pintegration verify   # los flujos en Java
 ```
 
-Un solo comando levanta el ambiente, espera al healthcheck, ejecuta la colección con Newman
-y baja el ambiente. Resultado medido: **23 requests, 69 aserciones, 0 fallos**, en dos
-vueltas seguidas contra la misma base de datos.
+Resultado medido: Postman **32 requests, 92 aserciones, 0 fallos** en dos vueltas seguidas
+contra la misma base de datos; Java **4 tests, 0 fallos**, que además verifican los eventos
+de dominio (`OrdenGenerada`, `OrdenCompletada`, `PaqueteListo`) que desde HTTP no se ven.
 
-| Carpeta | Qué cubre |
-| :------ | :-------- |
-| `01 - Flujo correcto` | El ciclo end-to-end: orden → preparación → paquete → envasado → etiquetado → listo → orden completada |
-| `02 - Flujo incorrecto` | Los rechazos esperados (400 de validación, 409 de regla de negocio, 404), verificando código HTTP **y** cuerpo `ApiError` |
-
-Cómo levantarlo y lanzarlo: [`postman/README.md`](postman/README.md).
+Cómo levantarlo y lanzarlo: [`postman/README.md`](postman/README.md) y
+[`docs/pruebas-integracion.md`](docs/pruebas-integracion.md).
 
 ### Pruebas de contrato (Pact)
 
@@ -389,7 +501,8 @@ verificación objetiva por *mutation testing* con PIT.
 .\tools\validate-tests.ps1 -Mutation    # además, mutation testing
 ```
 
-Resultado medido: **163 tests**, 98.8 % de líneas y **198/200 mutantes muertos** (99 %).
+Resultado medido (25/09/2026): **163 tests**, 98.7 % de líneas y **154/156 mutantes muertos** (99 %);
+los 2 supervivientes son `hashCode()` equivalentes. Reporte: `docs/reportes/mutation-pit/index.html`.
 La primera pasada de PIT detectó 12 huecos de verificación que la cobertura no veía —
 entre ellos, que se podía borrar la publicación de eventos de dominio sin que fallara
 ningún test.
@@ -397,7 +510,8 @@ ningún test.
 Guía completa: [`docs/entorno-pruebas-ai.md`](docs/entorno-pruebas-ai.md).
 
 **Integración** — dos subagentes (`integration-test-writer`, `integration-test-reviewer`),
-tres skills (el contrato de la API, las convenciones de la colección y la lista de revisión)
+cuatro skills (el contrato de la API, las convenciones de la colección, las de los flujos en
+Java —`spring-integration-testing`— y la lista de revisión)
 y un gate que levanta el ambiente y ejecuta la colección
 (`tools/validate-integration.ps1` / `.sh`).
 

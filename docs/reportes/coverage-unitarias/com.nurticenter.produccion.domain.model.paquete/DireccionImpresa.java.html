@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DireccionImpresa.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ms-production-packaging</a> &gt; <a href="index.source.html" class="el_package">com.nurticenter.produccion.domain.model.paquete</a> &gt; <span class="el_source">DireccionImpresa.java</span></div><h1>DireccionImpresa.java</h1><pre class="source lang-java linenums">package com.nurticenter.produccion.domain.model.paquete;
+
+import java.util.Objects;
+
+/**
+ * VALUE OBJECT - DireccionImpresa
+ *
+ * Copia inmutable de la DireccionEntrega de BC3 en el momento de etiquetar.
+ * No cambia aunque el paciente modifique su direccion en BC3 despues.
+ *
+ * Distincion semantica con BC3:
+ *   BC3: DireccionEntrega -&gt; lo que el paciente configuro (editable)
+ *   BC4: DireccionImpresa -&gt; lo que esta impreso en el paquete (inmutable)
+ */
+public record DireccionImpresa(
+        String calle,
+        String numero,
+        String referencia,
+        String ciudad
+) {
+<span class="fc" id="L21">    public DireccionImpresa {</span>
+<span class="fc" id="L22">        Objects.requireNonNull(calle,   &quot;La calle es obligatoria.&quot;);</span>
+<span class="fc" id="L23">        Objects.requireNonNull(numero,  &quot;El numero es obligatorio.&quot;);</span>
+<span class="fc" id="L24">        Objects.requireNonNull(ciudad,  &quot;La ciudad es obligatoria.&quot;);</span>
+        // referencia es opcional (puede ser null o vacio)
+<span class="fc" id="L26">    }</span>
+
+    /**
+     * Verifica que los campos minimos para imprimir la etiqueta estan presentes.
+     */
+    public boolean estaCompleta() {
+<span class="fc bfc" id="L32" title="All 6 branches covered.">        return !calle.isBlank() &amp;&amp; !numero.isBlank() &amp;&amp; !ciudad.isBlank();</span>
+    }
+
+    /**
+     * Formato legible para imprimir en la etiqueta fisica.
+     * Ejemplo: &quot;Av. Mutualista 450, Ref: Edificio azul - Santa Cruz&quot;
+     */
+    public String formatoParaEtiqueta() {
+<span class="fc" id="L40">        String base = calle + &quot; &quot; + numero;</span>
+<span class="fc bfc" id="L41" title="All 4 branches covered.">        if (referencia != null &amp;&amp; !referencia.isBlank()) {</span>
+<span class="fc" id="L42">            base += &quot;, Ref: &quot; + referencia;</span>
+        }
+<span class="fc" id="L44">        return base + &quot; - &quot; + ciudad;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

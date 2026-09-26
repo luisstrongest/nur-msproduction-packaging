@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrdenJpaEntity.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ms-production-packaging</a> &gt; <a href="index.source.html" class="el_package">com.nurticenter.produccion.infrastructure.persistence.orden</a> &gt; <span class="el_source">OrdenJpaEntity.java</span></div><h1>OrdenJpaEntity.java</h1><pre class="source lang-java linenums">package com.nurticenter.produccion.infrastructure.persistence.orden;
+
+import com.nurticenter.produccion.domain.model.orden.EstadoOrden;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OrderColumn;
+import jakarta.persistence.Table;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * ENTIDAD JPA - OrdenDeProduccion
+ *
+ * Representacion persistente del agregado. Vive SOLO en infraestructura;
+ * el dominio no la conoce. Hibernate genera las tablas a partir de esta clase.
+ */
+@Entity
+@Table(name = &quot;orden_de_produccion&quot;)
+public class OrdenJpaEntity {
+
+    @Id
+    @Column(name = &quot;id&quot;, nullable = false, updatable = false)
+    private String id;
+
+    @Column(name = &quot;fecha_produccion&quot;, nullable = false)
+    private LocalDate fechaProduccion;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = &quot;estado&quot;, nullable = false)
+    private EstadoOrden estado;
+
+<span class="pc" id="L41">    @ElementCollection(fetch = FetchType.EAGER)</span>
+    @CollectionTable(
+            name = &quot;orden_item&quot;,
+            joinColumns = @JoinColumn(name = &quot;orden_id&quot;))
+    @OrderColumn(name = &quot;posicion&quot;)
+    private List&lt;ItemOrdenEmbeddable&gt; items = new ArrayList&lt;&gt;();
+
+<span class="pc" id="L48">    @ElementCollection(fetch = FetchType.EAGER)</span>
+    @CollectionTable(
+            name = &quot;orden_paquete_generado&quot;,
+            joinColumns = @JoinColumn(name = &quot;orden_id&quot;))
+    @Column(name = &quot;paquete_id&quot;)
+    @OrderColumn(name = &quot;posicion&quot;)
+    private List&lt;String&gt; paqueteIds = new ArrayList&lt;&gt;();
+
+<span class="nc" id="L56">    protected OrdenJpaEntity() {</span>
+        // requerido por JPA
+<span class="nc" id="L58">    }</span>
+
+    public OrdenJpaEntity(String id, LocalDate fechaProduccion, EstadoOrden estado,
+<span class="fc" id="L61">                          List&lt;ItemOrdenEmbeddable&gt; items, List&lt;String&gt; paqueteIds) {</span>
+<span class="fc" id="L62">        this.id = id;</span>
+<span class="fc" id="L63">        this.fechaProduccion = fechaProduccion;</span>
+<span class="fc" id="L64">        this.estado = estado;</span>
+<span class="fc" id="L65">        this.items = new ArrayList&lt;&gt;(items);</span>
+<span class="fc" id="L66">        this.paqueteIds = new ArrayList&lt;&gt;(paqueteIds);</span>
+<span class="fc" id="L67">    }</span>
+
+<span class="fc" id="L69">    public String getId()                       { return id; }</span>
+<span class="fc" id="L70">    public LocalDate getFechaProduccion()       { return fechaProduccion; }</span>
+<span class="fc" id="L71">    public EstadoOrden getEstado()              { return estado; }</span>
+<span class="fc" id="L72">    public List&lt;ItemOrdenEmbeddable&gt; getItems() { return items; }</span>
+<span class="fc" id="L73">    public List&lt;String&gt; getPaqueteIds()         { return paqueteIds; }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
