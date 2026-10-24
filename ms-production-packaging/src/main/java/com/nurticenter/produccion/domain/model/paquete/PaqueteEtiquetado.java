@@ -5,6 +5,8 @@ import com.nurticenter.produccion.domain.event.PaqueteListo;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * AGREGADO RAIZ - PaqueteEtiquetado
@@ -23,6 +25,7 @@ public class PaqueteEtiquetado {
     // -- Referencias externas (solo IDs - no objetos de otros BC) -------------------
     private final PacienteId pacienteId;   // ref. opaca a BC1
     private final String ordenId;          // ref. opaca a OrdenDeProduccion
+    private final DestinoEntrega destino;  // null si el paquete se creo a mano
 
     // -- Atributos -------------------------------------------------------------------
     private Etiqueta etiqueta;
@@ -32,10 +35,11 @@ public class PaqueteEtiquetado {
     private final List<Object> eventos;
 
     // -- Constructor privado ----------------------------------------------------------
-    private PaqueteEtiquetado(PaqueteId id, PacienteId pacienteId, String ordenId) {
+    private PaqueteEtiquetado(PaqueteId id, PacienteId pacienteId, String ordenId, DestinoEntrega destino) {
         this.id         = id;
         this.pacienteId = pacienteId;
         this.ordenId    = ordenId;
+        this.destino    = destino;
         this.estado     = EstadoPaquete.ENVASADO_PENDIENTE;
         this.etiqueta   = null;
         this.eventos    = new ArrayList<>();
@@ -52,7 +56,18 @@ public class PaqueteEtiquetado {
      * @return PaqueteEtiquetado en estado ENVASADO_PENDIENTE
      */
     public static PaqueteEtiquetado crear(PacienteId pacienteId, String ordenId) {
-        return new PaqueteEtiquetado(PaqueteId.nuevo(), pacienteId, ordenId);
+        return new PaqueteEtiquetado(PaqueteId.nuevo(), pacienteId, ordenId, null);
+    }
+
+    /**
+     * Crea el paquete de una entrega del CalendarioConsolidado: ademas del paciente
+     * guarda el destino (dia del calendario, suscripcion, direccion, porciones) que
+     * BC5 necesita y que viaja en PaqueteListo.
+     */
+    public static PaqueteEtiquetado crearParaEntrega(PacienteId pacienteId, String ordenId,
+                                                     DestinoEntrega destino) {
+        Objects.requireNonNull(destino, "El destino de la entrega es obligatorio.");
+        return new PaqueteEtiquetado(PaqueteId.nuevo(), pacienteId, ordenId, destino);
     }
 
     /**
@@ -61,7 +76,14 @@ public class PaqueteEtiquetado {
      */
     public static PaqueteEtiquetado reconstituir(PaqueteId id, PacienteId pacienteId, String ordenId,
                                                  EstadoPaquete estado, Etiqueta etiqueta) {
-        PaqueteEtiquetado paquete = new PaqueteEtiquetado(id, pacienteId, ordenId);
+        return reconstituir(id, pacienteId, ordenId, estado, etiqueta, null);
+    }
+
+    /** Igual que el anterior, preservando el destino de la entrega (puede ser null). */
+    public static PaqueteEtiquetado reconstituir(PaqueteId id, PacienteId pacienteId, String ordenId,
+                                                 EstadoPaquete estado, Etiqueta etiqueta,
+                                                 DestinoEntrega destino) {
+        PaqueteEtiquetado paquete = new PaqueteEtiquetado(id, pacienteId, ordenId, destino);
         paquete.estado   = estado;
         paquete.etiqueta = etiqueta;
         return paquete;
@@ -130,6 +152,9 @@ public class PaqueteEtiquetado {
                 this.ordenId,
                 this.pacienteId.valor(),
                 this.etiqueta.codigo().valor(),
+                this.etiqueta.nombrePaciente(),
+                this.etiqueta.direccion(),
+                this.destino,
                 LocalDateTime.now()
         ));
     }
@@ -141,6 +166,7 @@ public class PaqueteEtiquetado {
     public String ordenId()         { return ordenId; }
     public Etiqueta etiqueta()      { return etiqueta; }
     public EstadoPaquete estado()   { return estado; }
+    public Optional<DestinoEntrega> destino() { return Optional.ofNullable(destino); }
 
     public List<Object> pullEventos() {
         List<Object> copia = List.copyOf(this.eventos);

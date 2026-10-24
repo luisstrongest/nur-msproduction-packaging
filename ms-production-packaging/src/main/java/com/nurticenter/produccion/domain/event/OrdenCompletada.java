@@ -1,5 +1,8 @@
 package com.nurticenter.produccion.domain.event;
 
+import com.nurticenter.produccion.domain.model.orden.OrigenCalendario;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -15,9 +18,15 @@ import java.util.List;
  *
  * La lista de paqueteIds permite a BC5 consultar los paquetes
  * sin necesidad de conocer la estructura de la OrdenDeProduccion.
+ *
+ * origen es null si la orden no vino de un CalendarioConsolidado de BC3.
+ * totalRecetasPreparadas = suma de las porciones de todos los items.
  */
 public record OrdenCompletada(
         String ordenId,
+        LocalDate fechaProduccion,
+        OrigenCalendario origen,
+        int totalRecetasPreparadas,
         List<String> paqueteIds,
         LocalDateTime occurredAt
 ) implements DomainEvent {

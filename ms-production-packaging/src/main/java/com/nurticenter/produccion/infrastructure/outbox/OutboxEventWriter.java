@@ -23,21 +23,33 @@ import java.time.Clock;
  * MANDATORY: un evento publicado fuera de una transaccion es un error de
  * programacion y se rechaza en vez de perderse en silencio.
  *
+ * correlationId, en este orden:
+ *   1. el del evento entrante que se esta procesando (ContextoCorrelacion); se
+ *      asocia a la orden para sus eventos posteriores;
+ *   2. el asociado antes a la orden del evento;
+ *   3. "corr-orden-{ordenId}" para las ordenes creadas a mano.
+ *
  * La publicacion en Kafka la hace despues {@link OutboxRelay}.
  */
 @Component
 public class OutboxEventWriter {
 
     private final SpringDataOutboxRepository repositorio;
+    private final SpringDataCorrelacionOrdenRepository correlaciones;
+    private final ContextoCorrelacion contexto;
     private final MapeadorEventoIntegracion mapeador;
     private final Clock reloj;
     private final String topic;
 
     public OutboxEventWriter(SpringDataOutboxRepository repositorio,
+                             SpringDataCorrelacionOrdenRepository correlaciones,
+                             ContextoCorrelacion contexto,
                              MapeadorEventoIntegracion mapeador,
                              Clock reloj,
                              @Value("${app.kafka.topic}") String topic) {
         this.repositorio = repositorio;
+        this.correlaciones = correlaciones;
+        this.contexto = contexto;
         this.mapeador = mapeador;
         this.reloj = reloj;
         this.topic = topic;
@@ -46,7 +58,7 @@ public class OutboxEventWriter {
     @EventListener
     @Transactional(propagation = Propagation.MANDATORY)
     public void guardar(DomainEvent evento) {
-        var mensaje = mapeador.mapear(evento);
+        var mensaje = mapeador.mapear(evento, correlacionDe(MapeadorEventoIntegracion.ordenDe(evento)));
         repositorio.save(new OutboxJpaEntity(
                 mensaje.eventId(),
                 mensaje.eventName(),
@@ -54,5 +66,20 @@ public class OutboxEventWriter {
                 mensaje.key(),
                 mensaje.json(),
                 reloj.instant()));
+    }
+
+    private String correlacionDe(String ordenId) {
+        return contexto.actual()
+                .map(entrante -> asociar(ordenId, entrante))
+                .orElseGet(() -> correlaciones.findById(ordenId)
+                        .map(CorrelacionOrdenJpaEntity::getCorrelationId)
+                        .orElse(MapeadorEventoIntegracion.PREFIJO_CORRELACION + ordenId));
+    }
+
+    private String asociar(String ordenId, String correlationId) {
+        if (!correlaciones.existsById(ordenId)) {
+            correlaciones.save(new CorrelacionOrdenJpaEntity(ordenId, correlationId));
+        }
+        return correlationId;
     }
 }

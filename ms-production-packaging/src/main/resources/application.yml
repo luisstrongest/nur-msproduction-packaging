@@ -22,9 +22,9 @@ spring:
     show-sql: true
     open-in-view: false
 
-  # -- Kafka (productor de eventos de integracion) ----------------------------
-  # Solo se usa si app.kafka.enabled=true. Serializadores String por defecto:
-  # el outbox ya guarda el sobre JSON armado.
+  # -- Kafka (productor y consumidor de eventos de integracion) ---------------
+  # Solo se usa si app.kafka.enabled=true. (De)serializadores String por defecto:
+  # el outbox ya guarda el sobre JSON armado y el consumidor lo lee como texto.
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
@@ -33,6 +33,11 @@ spring:
         enable.idempotence: true
         # Si el broker no responde, no bloquear el hilo HTTP 60 s (default)
         max.block.ms: 5000
+    consumer:
+      # group.id = nombre del servicio (contracts/README.md, reglas de consumidores)
+      group-id: ${spring.application.name}
+      # Un grupo nuevo lee el topic desde el principio; el inbox evita duplicados
+      auto-offset-reset: earliest
 
 server:
   port: 8082
@@ -45,6 +50,9 @@ app:
   kafka:
     enabled: ${KAFKA_ENABLED:false}
     topic: ${KAFKA_TOPIC:bc4.produccion.eventos}
+    consumo:
+      # BC4 consume bc3.CalendarioConsolidadoCerrado (ignora el resto de eventos de BC3)
+      catering-topic: ${KAFKA_TOPIC_CATERING:bc3.catering.eventos}
   outbox:
     poll-delay-ms: ${OUTBOX_POLL_DELAY_MS:1000}   # cada cuanto busca pendientes
     batch-size: ${OUTBOX_BATCH_SIZE:50}           # filas por ciclo

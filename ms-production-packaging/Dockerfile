@@ -67,6 +67,8 @@ EXPOSE 8082
 #                         off-heap del GC y buffers NIO.
 # java.security.egd    -> acelera el arranque de Tomcat en entornos sin buena
 #                         fuente de entropia (tipico en VMs y containers).
+# Zona horaria de Bolivia (-04:00) para la JVM y los logs; el compose puede cambiarla
+ENV TZ=America/La_Paz
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
 
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

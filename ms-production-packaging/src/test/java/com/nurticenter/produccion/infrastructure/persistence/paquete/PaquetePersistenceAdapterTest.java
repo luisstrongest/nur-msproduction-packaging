@@ -1,6 +1,7 @@
 package com.nurticenter.produccion.infrastructure.persistence.paquete;
 
 import com.nurticenter.produccion.domain.model.paquete.CodigoIdentificacion;
+import com.nurticenter.produccion.domain.model.paquete.DestinoEntrega;
 import com.nurticenter.produccion.domain.model.paquete.DireccionImpresa;
 import com.nurticenter.produccion.domain.model.paquete.EstadoPaquete;
 import com.nurticenter.produccion.domain.model.paquete.Etiqueta;
@@ -181,5 +182,41 @@ class PaquetePersistenceAdapterTest {
         given(jpa.existsByCodigoValor("PKG-ABC12345")).willReturn(true);
 
         assertThat(adaptador.existeCodigoIdentificacion("PKG-ABC12345")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Un paquete de una entrega guarda y recupera su destino")
+    void idaYVueltaConDestino() {
+        var destino = new DestinoEntrega("CD-70011", "SUS-501", LocalDate.of(2026, 10, 23),
+                "DIR-58", -17.7612, -63.1825, 4);
+        PaqueteEtiquetado original = PaqueteEtiquetado.reconstituir(PaqueteId.de(PAQUETE_ID),
+                PacienteId.de("PAC-1001"), "orden-1", EstadoPaquete.ENVASADO, null, destino);
+        adaptador.guardar(original);
+        verify(jpa).save(entidadCaptor.capture());
+        PaqueteJpaEntity entidad = entidadCaptor.getValue();
+        given(jpa.findById(PAQUETE_ID)).willReturn(Optional.of(entidad));
+
+        PaqueteEtiquetado recuperado = adaptador.buscarPorId(PaqueteId.de(PAQUETE_ID)).orElseThrow();
+
+        assertThat(entidad.tieneDestino()).isTrue();
+        assertThat(entidad.getDestinoIdCalendarioDia()).isEqualTo("CD-70011");
+        assertThat(entidad.getDestinoIdSuscripcion()).isEqualTo("SUS-501");
+        assertThat(entidad.getDestinoFechaEntrega()).isEqualTo(LocalDate.of(2026, 10, 23));
+        assertThat(entidad.getDestinoIdDireccion()).isEqualTo("DIR-58");
+        assertThat(entidad.getDestinoLatitud()).isEqualTo(-17.7612);
+        assertThat(entidad.getDestinoLongitud()).isEqualTo(-63.1825);
+        assertThat(entidad.getDestinoNroPorciones()).isEqualTo(4);
+        assertThat(recuperado.destino()).contains(destino);
+    }
+
+    @Test
+    @DisplayName("Un paquete creado a mano no llena las columnas del destino")
+    void paqueteSinDestinoNoLlenaColumnas() {
+        adaptador.guardar(paquete(EstadoPaquete.LISTO, etiqueta()));
+
+        verify(jpa).save(entidadCaptor.capture());
+        assertThat(entidadCaptor.getValue().tieneDestino()).isFalse();
+        assertThat(entidadCaptor.getValue().getDestinoNroPorciones()).isNull();
+        assertThat(PaqueteEntityMapper.aDominio(entidadCaptor.getValue()).destino()).isEmpty();
     }
 }

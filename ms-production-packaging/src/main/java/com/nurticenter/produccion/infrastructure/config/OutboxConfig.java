@@ -19,7 +19,7 @@ public class OutboxConfig {
 
     @Bean
     Clock reloj() {
-        return Clock.systemUTC();
+        return Clock.system(ZoneId.of("America/La_Paz"));
     }
 
     @Bean

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -230,6 +231,97 @@ class OrdenDeProduccionTest {
                     .isInstanceOf(UnsupportedOperationException.class);
             assertThatThrownBy(() -> orden.paqueteIds().add("paquete-2"))
                     .isInstanceOf(UnsupportedOperationException.class);
+        }
+    }
+
+    // -- Orden de un CalendarioConsolidado de BC3 -----------------------------
+
+    @Nested
+    @DisplayName("Orden de un CalendarioConsolidado")
+    class DesdeCalendario {
+
+        private final OrigenCalendario origen = new OrigenCalendario("CAL-20261023", LocalDate.of(2026, 10, 23));
+
+        private OrdenDeProduccion ordenDelCalendario() {
+            return OrdenDeProduccion.crearDesdeCalendario(
+                    LocalDate.of(2026, 10, 22), List.of(itemDe("REC-14"), itemDe("REC-31")), origen);
+        }
+
+        @Test
+        @DisplayName("crearDesdeCalendario() recuerda el calendario y emite OrdenGenerada")
+        void recuerdaElCalendarioYEmiteOrdenGenerada() {
+            OrdenDeProduccion orden = ordenDelCalendario();
+
+            assertThat(orden.origen()).contains(origen);
+            assertThat(orden.estado()).isEqualTo(EstadoOrden.PENDIENTE);
+            assertThat(orden.pullEventos()).singleElement().isInstanceOf(OrdenGenerada.class);
+        }
+
+        @Test
+        @DisplayName("crearDesdeCalendario() exige el origen")
+        void exigeElOrigen() {
+            List<ItemOrden> items = List.of(itemDe("REC-14"));
+
+            assertThatThrownBy(() -> OrdenDeProduccion.crearDesdeCalendario(LocalDate.now(), items, null))
+                    .isInstanceOf(NullPointerException.class)
+                    .hasMessageContaining("origen");
+        }
+
+        @Test
+        @DisplayName("Una orden creada a mano no tiene origen")
+        void unaOrdenManualNoTieneOrigen() {
+            assertThat(ordenCon("REC-1").origen()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("completar() emite OrdenCompletada con el calendario, la fecha y el total de porciones")
+        void completarLlevaElCalendarioYElTotalDePorciones() {
+            OrdenDeProduccion orden = ordenDelCalendario();
+            orden.pullEventos();
+            orden.iniciarPreparacion();
+            orden.registrarPaqueteGenerado("paquete-1");
+            orden.marcarItemPreparado("REC-14");
+            orden.marcarItemPreparado("REC-31");
+
+            orden.completar();
+
+            OrdenCompletada evento = (OrdenCompletada) orden.pullEventos().get(0);
+            assertThat(evento.origen()).isEqualTo(origen);
+            assertThat(evento.fechaProduccion()).isEqualTo(LocalDate.of(2026, 10, 22));
+            assertThat(evento.totalRecetasPreparadas()).isEqualTo(5000).isEqualTo(orden.calcularTotalPorciones());
+            assertThat(evento.paqueteIds()).containsExactly("paquete-1");
+        }
+
+        @Test
+        @DisplayName("OrdenCompletada de una orden creada a mano no trae origen")
+        void ordenManualCompletadaSinOrigen() {
+            OrdenDeProduccion orden = ordenCon("REC-1");
+            orden.pullEventos();
+            orden.iniciarPreparacion();
+            orden.marcarItemPreparado("REC-1");
+
+            orden.completar();
+
+            assertThat(((OrdenCompletada) orden.pullEventos().get(0)).origen()).isNull();
+        }
+
+        @Test
+        @DisplayName("reconstituir() con origen lo conserva y no emite eventos")
+        void reconstituirConservaElOrigen() {
+            OrdenDeProduccion orden = OrdenDeProduccion.reconstituir(OrdenId.de("orden-1"), LocalDate.of(2026, 10, 22),
+                    EstadoOrden.EN_PREPARACION, List.of(itemDe("REC-14")), List.of(), origen);
+
+            assertThat(orden.origen()).isEqualTo(Optional.of(origen));
+            assertThat(orden.pullEventos()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("reconstituir() sin origen deja la orden sin origen")
+        void reconstituirSinOrigen() {
+            OrdenDeProduccion orden = OrdenDeProduccion.reconstituir(OrdenId.de("orden-1"), LocalDate.of(2026, 10, 22),
+                    EstadoOrden.PENDIENTE, List.of(itemDe("REC-14")), List.of());
+
+            assertThat(orden.origen()).isEmpty();
         }
     }
 }

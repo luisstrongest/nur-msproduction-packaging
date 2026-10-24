@@ -3,6 +3,7 @@ package com.nurticenter.produccion.infrastructure.persistence.orden;
 import com.nurticenter.produccion.domain.model.orden.ItemOrden;
 import com.nurticenter.produccion.domain.model.orden.OrdenDeProduccion;
 import com.nurticenter.produccion.domain.model.orden.OrdenId;
+import com.nurticenter.produccion.domain.model.orden.OrigenCalendario;
 import com.nurticenter.produccion.domain.shared.Porcion;
 
 import java.util.List;
@@ -19,12 +20,14 @@ final class OrdenEntityMapper {
         List<ItemOrdenEmbeddable> items = orden.items().stream()
                 .map(OrdenEntityMapper::aItemEmbeddable)
                 .toList();
-        return new OrdenJpaEntity(
+        OrdenJpaEntity entidad = new OrdenJpaEntity(
                 orden.id().valor(),
                 orden.fechaProduccion(),
                 orden.estado(),
                 items,
                 orden.paqueteIds());
+        orden.origen().ifPresent(o -> entidad.asignarOrigen(o.idCalendario(), o.fechaEntrega()));
+        return entidad;
     }
 
     static OrdenDeProduccion aDominio(OrdenJpaEntity entidad) {
@@ -36,7 +39,10 @@ final class OrdenEntityMapper {
                 entidad.getFechaProduccion(),
                 entidad.getEstado(),
                 items,
-                entidad.getPaqueteIds());
+                entidad.getPaqueteIds(),
+                entidad.tieneOrigen()
+                        ? new OrigenCalendario(entidad.getIdCalendario(), entidad.getFechaEntrega())
+                        : null);
     }
 
     private static ItemOrdenEmbeddable aItemEmbeddable(ItemOrden item) {

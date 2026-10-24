@@ -5,6 +5,7 @@ import com.nurticenter.produccion.domain.model.orden.EstadoOrden;
 import com.nurticenter.produccion.domain.model.orden.ItemOrden;
 import com.nurticenter.produccion.domain.model.orden.OrdenDeProduccion;
 import com.nurticenter.produccion.domain.model.orden.OrdenId;
+import com.nurticenter.produccion.domain.model.orden.OrigenCalendario;
 import com.nurticenter.produccion.domain.shared.Porcion;
 import com.nurticenter.produccion.domain.shared.UnidadMedida;
 import org.junit.jupiter.api.DisplayName;
@@ -155,5 +156,35 @@ class OrdenPersistenceAdapterTest {
         assertThat(recuperada.paqueteIds()).isEqualTo(original.paqueteIds());
         assertThat(recuperada.items()).isEqualTo(original.items());
         assertThat(recuperada.items().get(0).estado()).isEqualTo(original.items().get(0).estado());
+    }
+
+    @Test
+    @DisplayName("Una orden de un calendario guarda y recupera su origen")
+    void idaYVueltaConOrigenDelCalendario() {
+        var origen = new OrigenCalendario("CAL-20261023", LocalDate.of(2026, 10, 23));
+        OrdenDeProduccion original = OrdenDeProduccion.reconstituir(OrdenId.de("orden-1"), FECHA,
+                EstadoOrden.PENDIENTE, ordenDeDominio().items(), List.of("paquete-1"), origen);
+        adaptador.guardar(original);
+        verify(jpa).save(entidadCaptor.capture());
+        OrdenJpaEntity entidad = entidadCaptor.getValue();
+        given(jpa.findById("orden-1")).willReturn(Optional.of(entidad));
+
+        OrdenDeProduccion recuperada = adaptador.buscarPorId(OrdenId.de("orden-1")).orElseThrow();
+
+        assertThat(entidad.tieneOrigen()).isTrue();
+        assertThat(entidad.getIdCalendario()).isEqualTo("CAL-20261023");
+        assertThat(entidad.getFechaEntrega()).isEqualTo(LocalDate.of(2026, 10, 23));
+        assertThat(recuperada.origen()).contains(origen);
+    }
+
+    @Test
+    @DisplayName("Una orden creada a mano no llena las columnas del origen")
+    void ordenSinOrigenNoLlenaColumnas() {
+        adaptador.guardar(ordenDeDominio());
+
+        verify(jpa).save(entidadCaptor.capture());
+        assertThat(entidadCaptor.getValue().tieneOrigen()).isFalse();
+        assertThat(entidadCaptor.getValue().getFechaEntrega()).isNull();
+        assertThat(OrdenEntityMapper.aDominio(entidadCaptor.getValue()).origen()).isEmpty();
     }
 }

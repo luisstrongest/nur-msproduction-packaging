@@ -8,6 +8,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * AGREGADO RAIZ - OrdenDeProduccion
@@ -28,17 +30,20 @@ public class OrdenDeProduccion {
     private EstadoOrden estado;
     private final List<ItemOrden> items;
     private final List<String> paqueteIdsGenerados; // referencias a PaqueteEtiquetado (solo Id)
+    private final OrigenCalendario origen;          // null si la orden se creo a mano
 
     // -- Eventos pendientes de publicacion (patron outbox) -------------------------
     private final List<Object> eventos;
 
     // -- Constructor privado - solo Factory Method ----------------------------------
-    private OrdenDeProduccion(OrdenId id, LocalDate fechaProduccion, List<ItemOrden> items) {
+    private OrdenDeProduccion(OrdenId id, LocalDate fechaProduccion, List<ItemOrden> items,
+                              OrigenCalendario origen) {
         if (items == null || items.isEmpty()) {
             throw new OrdenSinItemsException("Una OrdenDeProduccion debe tener al menos un ItemOrden.");
         }
         this.id               = id;
         this.fechaProduccion  = fechaProduccion;
+        this.origen           = origen;
         this.estado           = EstadoOrden.PENDIENTE;
         this.items            = new ArrayList<>(items);
         this.paqueteIdsGenerados = new ArrayList<>();
@@ -64,14 +69,27 @@ public class OrdenDeProduccion {
      */
     public static OrdenDeProduccion crear(LocalDate fechaProduccion, List<ItemOrden> items) {
         OrdenId id = OrdenId.nuevo();
-        return new OrdenDeProduccion(id, fechaProduccion, items);
+        return new OrdenDeProduccion(id, fechaProduccion, items, null);
+    }
+
+    /**
+     * Crea la orden de un CalendarioConsolidado de BC3, recordando de que
+     * calendario viene y para que dia de entrega se produce.
+     *
+     * @param origen calendario de BC3 que origina la orden
+     */
+    public static OrdenDeProduccion crearDesdeCalendario(LocalDate fechaProduccion, List<ItemOrden> items,
+                                                         OrigenCalendario origen) {
+        Objects.requireNonNull(origen, "El origen del calendario es obligatorio.");
+        return new OrdenDeProduccion(OrdenId.nuevo(), fechaProduccion, items, origen);
     }
 
     // -- Constructor de reconstitucion (para la capa de infraestructura) -----------
     private OrdenDeProduccion(OrdenId id, LocalDate fechaProduccion, EstadoOrden estado,
-                              List<ItemOrden> items, List<String> paqueteIds) {
+                              List<ItemOrden> items, List<String> paqueteIds, OrigenCalendario origen) {
         this.id                  = id;
         this.fechaProduccion     = fechaProduccion;
+        this.origen              = origen;
         this.estado              = estado;
         this.items               = new ArrayList<>(items);
         this.paqueteIdsGenerados = new ArrayList<>(paqueteIds);
@@ -87,7 +105,14 @@ public class OrdenDeProduccion {
     public static OrdenDeProduccion reconstituir(OrdenId id, LocalDate fechaProduccion,
                                                  EstadoOrden estado, List<ItemOrden> items,
                                                  List<String> paqueteIds) {
-        return new OrdenDeProduccion(id, fechaProduccion, estado, items, paqueteIds);
+        return reconstituir(id, fechaProduccion, estado, items, paqueteIds, null);
+    }
+
+    /** Igual que el anterior, para una orden que vino de un calendario de BC3 (origen puede ser null). */
+    public static OrdenDeProduccion reconstituir(OrdenId id, LocalDate fechaProduccion,
+                                                 EstadoOrden estado, List<ItemOrden> items,
+                                                 List<String> paqueteIds, OrigenCalendario origen) {
+        return new OrdenDeProduccion(id, fechaProduccion, estado, items, paqueteIds, origen);
     }
 
     // -- Comportamiento de dominio ---------------------------------------------------
@@ -152,6 +177,9 @@ public class OrdenDeProduccion {
         this.estado = EstadoOrden.COMPLETADA;
         this.eventos.add(new OrdenCompletada(
                 this.id.valor(),
+                this.fechaProduccion,
+                this.origen,
+                calcularTotalPorciones(),
                 List.copyOf(this.paqueteIdsGenerados),
                 LocalDateTime.now()
         ));
@@ -174,6 +202,7 @@ public class OrdenDeProduccion {
     public EstadoOrden estado()              { return estado; }
     public List<ItemOrden> items()           { return Collections.unmodifiableList(items); }
     public List<String> paqueteIds()         { return Collections.unmodifiableList(paqueteIdsGenerados); }
+    public Optional<OrigenCalendario> origen() { return Optional.ofNullable(origen); }
 
     /**
      * Retorna y limpia los eventos pendientes de publicacion.

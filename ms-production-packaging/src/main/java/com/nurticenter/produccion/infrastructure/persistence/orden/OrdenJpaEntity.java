@@ -53,6 +53,13 @@ public class OrdenJpaEntity {
     @OrderColumn(name = "posicion")
     private List<String> paqueteIds = new ArrayList<>();
 
+    // -- Origen en el CalendarioConsolidado de BC3 (null si la orden se creo a mano) --
+    @Column(name = "id_calendario")
+    private String idCalendario;
+
+    @Column(name = "fecha_entrega")
+    private LocalDate fechaEntrega;
+
     protected OrdenJpaEntity() {
         // requerido por JPA
     }
@@ -66,9 +73,20 @@ public class OrdenJpaEntity {
         this.paqueteIds = new ArrayList<>(paqueteIds);
     }
 
+    public void asignarOrigen(String idCalendario, LocalDate fechaEntrega) {
+        this.idCalendario = idCalendario;
+        this.fechaEntrega = fechaEntrega;
+    }
+
+    public boolean tieneOrigen() {
+        return idCalendario != null;
+    }
+
     public String getId()                       { return id; }
     public LocalDate getFechaProduccion()       { return fechaProduccion; }
     public EstadoOrden getEstado()              { return estado; }
     public List<ItemOrdenEmbeddable> getItems() { return items; }
     public List<String> getPaqueteIds()         { return paqueteIds; }
+    public String getIdCalendario()             { return idCalendario; }
+    public LocalDate getFechaEntrega()          { return fechaEntrega; }
 }

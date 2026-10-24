@@ -2,6 +2,7 @@ package com.nurticenter.produccion.infrastructure.event;
 
 import com.nurticenter.produccion.domain.event.OrdenGenerada;
 import com.nurticenter.produccion.domain.event.PaqueteListo;
+import com.nurticenter.produccion.domain.model.paquete.DireccionImpresa;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,7 +42,8 @@ class SpringEventPublisherTest {
             new OrdenGenerada("orden-1", LocalDate.of(2026, 7, 15), 2, LocalDateTime.now());
 
     private final PaqueteListo paqueteListo =
-            new PaqueteListo("paquete-1", "orden-1", "PAC-1001", "PKG-ABC12345", LocalDateTime.now());
+            new PaqueteListo("paquete-1", "orden-1", "PAC-1001", "PKG-ABC12345", "Juan Perez",
+                    new DireccionImpresa("Av. Busch", "450", null, "Santa Cruz"), null, LocalDateTime.now());
 
     @Test
     @DisplayName("Publica cada evento de dominio en el bus de Spring, respetando el orden")

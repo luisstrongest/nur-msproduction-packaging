@@ -5,6 +5,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -183,6 +184,72 @@ class PaqueteEtiquetadoTest {
             assertThat(paquete.pullEventos()).isEmpty();
             assertThat(paquete.estado()).isEqualTo(EstadoPaquete.LISTO);
             assertThat(paquete.etiqueta()).isEqualTo(etiqueta);
+        }
+    }
+
+    @Nested
+    @DisplayName("Paquete de una entrega del CalendarioConsolidado")
+    class ParaEntrega {
+
+        private final DestinoEntrega destino = new DestinoEntrega(
+                "CD-70011", "SUS-501", LocalDate.of(2026, 10, 23), "DIR-58", -17.7612, -63.1825, 4);
+
+        @Test
+        @DisplayName("crearParaEntrega() guarda el destino y no emite eventos")
+        void guardaElDestino() {
+            PaqueteEtiquetado paquete = PaqueteEtiquetado.crearParaEntrega(PacienteId.de("PAC-1024"), "orden-1", destino);
+
+            assertThat(paquete.destino()).contains(destino);
+            assertThat(paquete.estado()).isEqualTo(EstadoPaquete.ENVASADO_PENDIENTE);
+            assertThat(paquete.pullEventos()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("crearParaEntrega() exige el destino")
+        void exigeElDestino() {
+            assertThatThrownBy(() -> PaqueteEtiquetado.crearParaEntrega(PacienteId.de("PAC-1024"), "orden-1", null))
+                    .isInstanceOf(NullPointerException.class)
+                    .hasMessageContaining("destino");
+        }
+
+        @Test
+        @DisplayName("PaqueteListo lleva el destino y lo impreso en la etiqueta")
+        void paqueteListoLlevaDestinoYEtiqueta() {
+            PaqueteEtiquetado paquete = PaqueteEtiquetado.crearParaEntrega(PacienteId.de("PAC-1024"), "orden-1", destino);
+            paquete.registrarEnvasado();
+            paquete.generarEtiqueta(datosCompletos());
+
+            paquete.marcarListo();
+
+            PaqueteListo evento = (PaqueteListo) paquete.pullEventos().get(0);
+            assertThat(evento.destino()).isEqualTo(destino);
+            assertThat(evento.nombrePaciente()).isEqualTo("Ana Perez");
+            assertThat(evento.direccion()).isEqualTo(datosCompletos().direccionDelDia());
+            assertThat(evento.ordenId()).isEqualTo("orden-1");
+        }
+
+        @Test
+        @DisplayName("Un paquete creado a mano no tiene destino y su PaqueteListo tampoco")
+        void paqueteManualSinDestino() {
+            PaqueteEtiquetado paquete = paqueteNuevo();
+            paquete.registrarEnvasado();
+            paquete.generarEtiqueta(datosCompletos());
+
+            paquete.marcarListo();
+
+            assertThat(paquete.destino()).isEmpty();
+            assertThat(((PaqueteListo) paquete.pullEventos().get(0)).destino()).isNull();
+        }
+
+        @Test
+        @DisplayName("reconstituir() con destino lo conserva y no emite eventos")
+        void reconstituirConservaElDestino() {
+            PaqueteEtiquetado paquete = PaqueteEtiquetado.reconstituir(PaqueteId.de("paquete-1"),
+                    PacienteId.de("PAC-1024"), "orden-1", EstadoPaquete.ENVASADO, null, destino);
+
+            assertThat(paquete.destino()).contains(destino);
+            assertThat(paquete.estado()).isEqualTo(EstadoPaquete.ENVASADO);
+            assertThat(paquete.pullEventos()).isEmpty();
         }
     }
 }

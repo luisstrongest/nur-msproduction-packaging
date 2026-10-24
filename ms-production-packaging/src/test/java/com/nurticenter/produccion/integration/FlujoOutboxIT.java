@@ -91,7 +91,7 @@ class FlujoOutboxIT {
         assertThat(sobre.path("eventId").asText()).isEqualTo(filas.get(0).getEventId());
         assertThat(sobre.path("eventName").asText()).isEqualTo("bc4.OrdenGenerada");
         assertThat(sobre.path("eventVersion").asText()).isEqualTo("1.0");
-        assertThat(sobre.path("occurredOn").asText()).endsWith("Z");
+        assertThat(sobre.path("occurredOn").asText()).endsWith("-04:00");
         assertThat(sobre.path("source").asText()).isEqualTo("MsProductionPackaging");
         assertThat(sobre.path("correlationId").asText()).isEqualTo("corr-orden-" + ordenId);
         assertThat(sobre.path("data").path("idOrdenProduccion").asText()).isEqualTo(ordenId);

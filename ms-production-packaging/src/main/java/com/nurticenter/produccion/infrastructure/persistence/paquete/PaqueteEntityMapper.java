@@ -1,6 +1,7 @@
 package com.nurticenter.produccion.infrastructure.persistence.paquete;
 
 import com.nurticenter.produccion.domain.model.paquete.CodigoIdentificacion;
+import com.nurticenter.produccion.domain.model.paquete.DestinoEntrega;
 import com.nurticenter.produccion.domain.model.paquete.DireccionImpresa;
 import com.nurticenter.produccion.domain.model.paquete.Etiqueta;
 import com.nurticenter.produccion.domain.model.paquete.PacienteId;
@@ -35,6 +36,9 @@ final class PaqueteEntityMapper {
                     codigo.generadoEn(),
                     etiqueta.fechaGeneracion());
         }
+        paquete.destino().ifPresent(d -> entidad.asignarDestino(
+                d.idCalendarioDia(), d.idSuscripcion(), d.fechaEntrega(),
+                d.idDireccion(), d.latitud(), d.longitud(), d.nroPorciones()));
         return entidad;
     }
 
@@ -59,6 +63,21 @@ final class PaqueteEntityMapper {
                 PacienteId.de(entidad.getPacienteId()),
                 entidad.getOrdenId(),
                 entidad.getEstado(),
-                etiqueta);
+                etiqueta,
+                destinoDe(entidad));
+    }
+
+    private static DestinoEntrega destinoDe(PaqueteJpaEntity entidad) {
+        if (!entidad.tieneDestino()) {
+            return null;
+        }
+        return new DestinoEntrega(
+                entidad.getDestinoIdCalendarioDia(),
+                entidad.getDestinoIdSuscripcion(),
+                entidad.getDestinoFechaEntrega(),
+                entidad.getDestinoIdDireccion(),
+                entidad.getDestinoLatitud(),
+                entidad.getDestinoLongitud(),
+                entidad.getDestinoNroPorciones());
     }
 }
