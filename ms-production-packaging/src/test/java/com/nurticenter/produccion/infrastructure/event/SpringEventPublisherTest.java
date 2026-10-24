@@ -41,7 +41,7 @@ class SpringEventPublisherTest {
             new OrdenGenerada("orden-1", LocalDate.of(2026, 7, 15), 2, LocalDateTime.now());
 
     private final PaqueteListo paqueteListo =
-            new PaqueteListo("paquete-1", "PAC-1001", "PKG-ABC12345", LocalDateTime.now());
+            new PaqueteListo("paquete-1", "orden-1", "PAC-1001", "PKG-ABC12345", LocalDateTime.now());
 
     @Test
     @DisplayName("Publica cada evento de dominio en el bus de Spring, respetando el orden")

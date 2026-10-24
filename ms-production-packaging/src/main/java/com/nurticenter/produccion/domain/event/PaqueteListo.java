@@ -13,10 +13,12 @@ import java.time.LocalDateTime;
  *   - Auditoria: trazabilidad a nivel de paquete individual.
  *
  * Incluye el codigoIdentificacion para que BC5 pueda correlacionar
- * el paquete fisico con su registro digital sin consultar BC4.
+ * el paquete fisico con su registro digital sin consultar BC4, y la orden a la
+ * que pertenece para correlacionarlo con el resto de eventos de esa orden.
  */
 public record PaqueteListo(
         String paqueteId,
+        String ordenId,
         String pacienteId,
         String codigoIdentificacion,
         LocalDateTime occurredAt

@@ -15,8 +15,9 @@ import java.util.List;
  * Publica los eventos de dominio en el bus interno de Spring
  * ({@link ApplicationEventPublisher}) y los registra en el log.
  *
- * En un despliegue real, aqui se enrutarian a Kafka / RabbitMQ para
- * que otros bounded contexts (BC5) los consuman.
+ * Hacia otros bounded contexts los lleva el transactional outbox:
+ * {@code OutboxEventWriter} escucha este bus y guarda cada evento en la tabla
+ * outbox dentro de la misma transaccion; {@code OutboxRelay} los publica en Kafka.
  */
 @Component
 public class SpringEventPublisher implements EventPublisher {

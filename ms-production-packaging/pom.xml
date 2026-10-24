@@ -23,6 +23,8 @@
         <pitest.version>1.30.0</pitest.version>
         <pitest-junit5.version>1.2.3</pitest-junit5.version>
         <pact.version>4.6.21</pact.version>
+        <!-- 2024.0.x es la linea de Spring Cloud compatible con Spring Boot 3.4 -->
+        <spring-cloud.version>2024.0.1</spring-cloud.version>
     </properties>
 
     <dependencies>
@@ -78,6 +80,20 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Registro en Eureka (service discovery). Desactivado por defecto:
+             se enciende con EUREKA_ENABLED=true en el stack de contenedores -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+
+        <!-- Kafka: publica los eventos de dominio para otros bounded contexts.
+             Desactivado por defecto: se enciende con KAFKA_ENABLED=true -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -104,6 +120,18 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <build>
         <plugins>

@@ -22,8 +22,45 @@ spring:
     show-sql: true
     open-in-view: false
 
+  # -- Kafka (productor de eventos de integracion) ----------------------------
+  # Solo se usa si app.kafka.enabled=true. Serializadores String por defecto:
+  # el outbox ya guarda el sobre JSON armado.
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      acks: all
+      properties:
+        enable.idempotence: true
+        # Si el broker no responde, no bloquear el hilo HTTP 60 s (default)
+        max.block.ms: 5000
+
 server:
   port: 8082
+
+# -- Eventos hacia otros bounded contexts ---------------------------------------
+# Transactional outbox: los eventos se guardan SIEMPRE en la tabla outbox, en la
+# transaccion del caso de uso. El relay que los publica en Kafka solo corre con
+# app.kafka.enabled=true; sin Kafka quedan pendientes y salen cuando se active.
+app:
+  kafka:
+    enabled: ${KAFKA_ENABLED:false}
+    topic: ${KAFKA_TOPIC:bc4.produccion.eventos}
+  outbox:
+    poll-delay-ms: ${OUTBOX_POLL_DELAY_MS:1000}   # cada cuanto busca pendientes
+    batch-size: ${OUTBOX_BATCH_SIZE:50}           # filas por ciclo
+    send-timeout-ms: 5000                         # espera de la confirmacion de Kafka
+    retention-days: 7                             # luego se borran las ya publicadas
+
+# -- Service discovery (Eureka) -------------------------------------------------
+# Apagado por defecto para correr la app y los tests sin infraestructura.
+eureka:
+  client:
+    enabled: ${EUREKA_ENABLED:false}
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+  instance:
+    # En contenedores el hostname no es resoluble desde otros servicios: usar IP
+    prefer-ip-address: true
 
 # -- Swagger UI / OpenAPI ------------------------------------------------------
 # UI:   http://localhost:8082/swagger-ui.html

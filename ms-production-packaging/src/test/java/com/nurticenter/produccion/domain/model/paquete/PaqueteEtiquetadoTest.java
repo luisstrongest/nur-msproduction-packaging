@@ -136,7 +136,7 @@ class PaqueteEtiquetadoTest {
         }
 
         @Test
-        @DisplayName("El evento PaqueteListo lleva paciente y codigo, para que BC5 lo rastree")
+        @DisplayName("El evento PaqueteListo lleva orden, paciente y codigo, para que BC5 lo rastree")
         void elEventoPaqueteListoLlevaLosDatosDeTrazabilidad() {
             PaqueteEtiquetado paquete = paqueteNuevo();
             paquete.registrarEnvasado();
@@ -147,6 +147,7 @@ class PaqueteEtiquetadoTest {
 
             PaqueteListo evento = (PaqueteListo) paquete.pullEventos().get(0);
             assertThat(evento.paqueteId()).isEqualTo(paquete.id().valor());
+            assertThat(evento.ordenId()).isEqualTo("orden-1");
             assertThat(evento.pacienteId()).isEqualTo("paciente-1");
             assertThat(evento.codigoIdentificacion()).isEqualTo(paquete.etiqueta().codigo().valor());
             assertThat(evento.agregadoId()).isEqualTo(paquete.id().valor());

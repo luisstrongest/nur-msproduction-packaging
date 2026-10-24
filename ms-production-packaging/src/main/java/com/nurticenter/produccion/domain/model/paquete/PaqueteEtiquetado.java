@@ -127,6 +127,7 @@ public class PaqueteEtiquetado {
         this.estado = EstadoPaquete.LISTO;
         this.eventos.add(new PaqueteListo(
                 this.id.valor(),
+                this.ordenId,
                 this.pacienteId.valor(),
                 this.etiqueta.codigo().valor(),
                 LocalDateTime.now()
